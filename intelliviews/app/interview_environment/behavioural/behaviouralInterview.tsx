@@ -10,44 +10,24 @@ const scenarios = [
         title: "Conflict Resolution",
         situation:
             "You're leading a sprint and two senior engineers publicly disagree on the architecture for a critical microservice during a team meeting. One wants event-driven with Kafka; the other insists on synchronous REST. The debate is getting heated and the rest of the team has gone silent.",
-        followUps: [
-            "How do you de-escalate the situation in the meeting?",
-            "What framework would you use to evaluate both proposals objectively?",
-            "How do you ensure the person whose approach isn't chosen still feels valued?",
-        ],
     },
     {
         id: 2,
         title: "Handling Ambiguity",
         situation:
             "Your product manager just left the company mid-sprint. The feature you're building has incomplete requirements — there's no spec for error states, edge cases, or the mobile experience. Stakeholders expect a demo in 5 days.",
-        followUps: [
-            "What's the first thing you do after learning this news?",
-            "How do you prioritise what to build vs what to cut?",
-            "How do you communicate uncertainty to stakeholders without losing their confidence?",
-        ],
     },
     {
         id: 3,
         title: "Giving Difficult Feedback",
         situation:
             "A teammate you're close with has been consistently missing deadlines and their code quality has dropped noticeably over the past month. Other team members have started picking up the slack quietly, and morale is slipping. Your manager hasn't noticed yet.",
-        followUps: [
-            "Do you talk to your teammate directly, go to your manager, or both? Why?",
-            "How would you structure the conversation with your teammate?",
-            "What if they become defensive or dismiss your concerns?",
-        ],
     },
     {
         id: 4,
         title: "Ethical Decision Making",
         situation:
             "You discover that a feature your team shipped is collecting more user data than disclosed in the privacy policy. It's driving great engagement metrics and leadership is thrilled. You're the only one who seems to have noticed the discrepancy.",
-        followUps: [
-            "What's your immediate course of action?",
-            "How do you raise this without sounding accusatory?",
-            "What if leadership asks you to keep quiet until after the funding round?",
-        ],
     },
 ];
 
@@ -55,6 +35,8 @@ export default function BehaviouralPage() {
     const [activeScenario, setActiveScenario] = useState(0);
     const [responses, setResponses] = useState<Record<number, string>>({});
     const [currentFollowUp, setCurrentFollowUp] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [tokenCount, setTokenCount] = useState(0);
     const [chatHistory, setChatHistory] = useState<
         { role: "ai" | "candidate"; text: string }[]
     >([
@@ -66,32 +48,77 @@ export default function BehaviouralPage() {
     const [inputValue, setInputValue] = useState("");
 
     const scenario = scenarios[activeScenario];
+    const role = "Senior Software Engineer"; // Can be passed as prop or from session
 
-    function handleSend() {
-        if (!inputValue.trim()) return;
+    async function handleSend() {
+        if (!inputValue.trim() || isLoading) return;
 
+        setIsLoading(true);
+        const candidateInput = inputValue;
+
+        // Add candidate response to chat immediately
         const newHistory = [
             ...chatHistory,
-            { role: "candidate" as const, text: inputValue },
+            { role: "candidate" as const, text: candidateInput },
         ];
 
-        // AI follow-up
-        if (currentFollowUp < scenario.followUps.length) {
-            newHistory.push({
-                role: "ai" as const,
-                text: `Interesting perspective. Let me dig deeper: ${scenario.followUps[currentFollowUp]}`,
-            });
-            setCurrentFollowUp((prev) => prev + 1);
-        } else {
-            newHistory.push({
-                role: "ai" as const,
-                text: "Great — I've captured your responses for this scenario. Feel free to move to the next scenario when you're ready.",
-            });
-        }
-
         setChatHistory(newHistory);
-        setResponses({ ...responses, [activeScenario]: inputValue });
+        setResponses({ ...responses, [activeScenario]: candidateInput });
         setInputValue("");
+
+        try {
+            // Call Claude API for AI-generated follow-up
+            const apiResponse = await fetch("/api/behavioral-ai", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    scenario,
+                    candidateResponse: candidateInput,
+                    role,
+                    questionNumber: currentFollowUp + 1,
+                }),
+            });
+
+            if (!apiResponse.ok) {
+                const errorData = await apiResponse.json();
+                console.error("API Error:", errorData);
+                throw new Error(`API error: ${apiResponse.status}`);
+            }
+
+            const data = await apiResponse.json();
+            
+            if (!data.response) {
+                throw new Error("No response from AI");
+            }
+
+            const aiMessage = data.response;
+
+            // Update token count
+            if (data.tokenUsage) {
+                setTokenCount(data.tokenUsage.cumulativeTotal);
+                console.log(`✅ Token usage: ${data.tokenUsage.total} | Total: ${data.tokenUsage.estimatedCost}`);
+            }
+
+            // Add Claude's AI-generated response to chat
+            newHistory.push({
+                role: "ai" as const,
+                text: aiMessage,
+            });
+            
+            setChatHistory(newHistory);
+            setCurrentFollowUp((prev) => prev + 1);
+        } catch (error) {
+            console.error("❌ Error getting AI response:", error);
+            // Remove the last candidate message and show error
+            newHistory.pop();
+            newHistory.push({
+                role: "ai" as const,
+                text: "Sorry, I encountered an error generating a response. Please try again.",
+            });
+            setChatHistory(newHistory);
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     function handleScenarioSwitch(idx: number) {
@@ -145,27 +172,14 @@ export default function BehaviouralPage() {
                     {/* Follow-up questions preview */}
                     <div className="mb-4">
                         <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
-                            Follow-up questions
+                            💬 Live Conversation
                         </h3>
-                        <ul className="space-y-2">
-                            {scenario.followUps.map((q, i) => (
-                                <li
-                                    key={i}
-                                    className={`text-sm leading-relaxed flex items-start gap-2 ${i < currentFollowUp ? "text-zinc-500" : "text-zinc-400"
-                                        }`}
-                                >
-                                    <span
-                                        className={`mt-0.5 h-4 w-4 shrink-0 rounded-full flex items-center justify-center text-[10px] ${i < currentFollowUp
-                                                ? "bg-emerald-600 text-white"
-                                                : "bg-zinc-800 text-zinc-500"
-                                            }`}
-                                    >
-                                        {i < currentFollowUp ? "✓" : i + 1}
-                                    </span>
-                                    {q}
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="text-sm text-zinc-400">
+                            <p>Questions asked: {currentFollowUp}</p>
+                            <p className="text-[10px] text-zinc-600 mt-1">
+                                The AI interviewer will dynamically ask follow-ups based on your responses.
+                            </p>
+                        </div>
                     </div>
 
                     {/* Assessment rubric hint */}
@@ -236,20 +250,27 @@ export default function BehaviouralPage() {
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                            onKeyDown={(e) => e.key === "Enter" && !isLoading && handleSend()}
                             placeholder="Type your response..."
-                            className="flex-1 rounded-lg bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none ring-1 ring-zinc-700 focus:ring-indigo-500 transition-all"
+                            disabled={isLoading}
+                            className="flex-1 rounded-lg bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none ring-1 ring-zinc-700 focus:ring-indigo-500 transition-all disabled:opacity-50"
                         />
                         <button
                             onClick={handleSend}
-                            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
+                            disabled={isLoading}
+                            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Send
+                            {isLoading ? "Thinking..." : "Send"}
                         </button>
                     </div>
-                    <p className="mt-2 text-[10px] text-zinc-600">
-                        Tip: Be specific and use real examples from your experience. The AI will follow up with deeper questions.
-                    </p>
+                    <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-600">
+                        <p>Tip: Be specific and use real examples from your experience.</p>
+                        {tokenCount > 0 && (
+                            <span className="text-zinc-500">
+                                Tokens used: {tokenCount} (~${(tokenCount * 0.00015).toFixed(3)})
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 
