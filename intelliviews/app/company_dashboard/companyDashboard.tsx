@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface Candidate {
   id: string;
@@ -28,11 +28,11 @@ export default function CompanyDashboard() {
   // Sample candidate data - will be replaced with real data integration
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>({
     id: '1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
+    name: 'Paddy Zhuang',
+    email: 'yzhuang@tcd.ie',
     position: 'Full Stack Software Engineer',
     skills: ['React', 'TypeScript', 'Node.js'],
-    experience: '5 years',
+    experience: '2 years',
   });
 
   const [jobRequirements, setJobRequirements] = useState<JobRequirement[]>([
@@ -67,6 +67,39 @@ export default function CompanyDashboard() {
 
   const [newCultureValue, setNewCultureValue] = useState('');
   const [newCultureDescription, setNewCultureDescription] = useState('');
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  const sendInterviewEmail = async () => {
+    if (!selectedCandidate) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/send-interview-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          candidateName: selectedCandidate.name,
+          candidateEmail: selectedCandidate.email,
+          candidatePosition: selectedCandidate.position,
+        }),
+      });
+
+      if (response.ok) {
+        setEmailSent(true);
+        setTimeout(() => setEmailSent(false), 3000);
+      } else {
+        console.error('Failed to send email');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const addJobRequirement = () => {
     if (newQuality.trim()) {
@@ -190,8 +223,16 @@ export default function CompanyDashboard() {
                     </div>
                   </div>
 
-                  <button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-                    Send Interview Link to Canadidate
+                  <button 
+                    onClick={sendInterviewEmail}
+                    disabled={isLoading}
+                    className={`w-full mt-4 text-white font-semibold py-2 px-4 rounded-lg transition ${
+                      emailSent 
+                        ? 'bg-green-600 hover:bg-green-700' 
+                        : 'bg-blue-600 hover:bg-blue-700 disabled:opacity-50'
+                    }`}
+                  >
+                    {isLoading ? 'Sending...' : emailSent ? '✓ Email Sent!' : 'Send Interview Link to Candidate'}
                   </button>
                 </div>
               ) : (
