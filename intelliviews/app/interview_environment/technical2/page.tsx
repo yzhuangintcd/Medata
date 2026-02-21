@@ -3,94 +3,179 @@
 import Link from "next/link";
 import { useState } from "react";
 
-/* ─── Task data with integrated simulation ─── */
+/* ─── Task data with real-life scenarios ─── */
 const tasks = [
     {
         id: 1,
-        title: "System Design: Real-time Collaboration",
+        title: "Technical Debt vs Feature Velocity",
         difficulty: "Hard",
+        type: "scenario",
         description:
-            "Design a real-time collaborative document editing system (like Google Docs). Include conflict resolution, operational transforms, and how you'd handle 10,000 concurrent users. Then simulate prioritizing this feature against other team demands.",
-        starterCode: `// Describe your design in comments or pseudocode
+            "Your codebase has accumulated significant technical debt over 2 years of rapid growth. Test coverage is 30%, the deployment process takes 2 hours and fails 40% of the time, and the authentication system uses deprecated libraries with known security vulnerabilities.\n\nMeanwhile, your product team has a roadmap of high-value features that could increase revenue by 30% if shipped this quarter. Your engineering team is spending 60% of their time fighting fires instead of building new features.\n\nYour VP asks: 'Why is engineering so slow? Can't we just hire more people?'\n\nQuestion: How do you analyze this situation and make a recommendation?",
+        starterCode: `Your structured analysis:
 
-// 1. Architecture overview
-// ...
+1. Problem Framing:
+   - Root causes:
+   - Impact on business:
+   - Impact on team:
 
-// 2. Conflict resolution strategy
-// ...
+2. Data You'd Gather:
+   - Metrics needed:
+   - Stakeholder interviews:
+   - Technical assessment:
 
-// 3. Operational transforms
-// ...
+3. Options & Trade-offs:
+   
+   Option A: Stop all feature work for 1 quarter, focus on debt
+     Business impact:
+     Technical impact:
+     Team morale:
+     Risk:
+   
+   Option B: Dedicate 20% of sprint capacity to debt incrementally
+     Business impact:
+     Technical impact:
+     Team morale:
+     Risk:
+   
+   Option C: (Your alternative)
+     
 
-// 4. Scalability considerations
-// ...
+4. Your Recommendation:
+   
 
-// 5. Day-in-life simulation: How would you prioritize this against urgent bug fixes?
-// ...`,
+5. How You'd Present This:
+   - To VP of Engineering:
+   - To Product team:
+   - To your engineers:
+
+6. Success Metrics:
+   - How you'd measure progress:
+   - Timeline:
+`,
         hints: [
-            "Consider CRDTs vs Operational Transforms.",
-            "How do you handle network partitions?",
-            "Simulate: Your PM says this feature needs to ship in 2 weeks, but there's a P1 production bug. How do you respond?",
+            "The VP's question about hiring reveals a misunderstanding. How do you address it?",
+            "What's the cost of NOT addressing technical debt?",
+            "How do you make technical debt tangible to non-technical stakeholders?",
+            "What would be a realistic, incremental approach?",
         ],
     },
     {
         id: 2,
-        title: "Debugging: Memory Leak in Production",
+        title: "System Scalability Crisis",
         difficulty: "Hard",
+        type: "scenario",
         description:
-            "A production service is experiencing gradual memory growth leading to OOM crashes every 6 hours. You have heap dumps, metrics, and logs. Debug the issue and explain your process. Then simulate how you'd communicate this to stakeholders.",
-        starterCode: `// Investigation notes:
-// - Memory grows from 500MB to 2GB over 6 hours
-// - Heap dump shows large arrays of user sessions
-// - No obvious circular references
-// - Garbage collection running but not freeing memory
+            "Your application currently handles 10,000 concurrent users. Sales just closed a major enterprise deal that will bring 100,000 new users going live in 6 weeks. Your current architecture will definitely not handle that load — your database is already at 70% capacity and your API servers start throttling at 50,000 requests/minute.\n\nYou've identified 3 major bottlenecks: database queries, image processing pipeline, and session management. Each would take 3-4 weeks to properly fix. You have 3 engineers available.\n\nSales is celebrating. Leadership expects this to 'just work'. The contract has penalties if you can't handle the load.\n\nQuestion: How do you approach this? What's your risk mitigation strategy?",
+        starterCode: `Your strategic response:
 
-// Your debugging approach:
-// 1. ...
-// 2. ...
+1. Immediate Risk Assessment (Week 1):
+   - Critical path analysis:
+   - What breaks first at 100k users:
+   - Minimum viable scale solution:
 
-// Root cause hypothesis:
-// ...
+2. Quick Wins vs Proper Solutions:
+   
+   Bottleneck 1: Database
+     Quick hack (1 week):
+     Proper fix (4 weeks):
+     Your choice:
+   
+   Bottleneck 2: Image processing
+     Quick hack (1 week):
+     Proper fix (4 weeks):
+     Your choice:
+   
+   Bottleneck 3: Session management
+     Quick hack (1 week):
+     Proper fix (4 weeks):
+     Your choice:
 
-// Fix:
-// ...
+3. Resource Allocation:
+   - Engineer 1:
+   - Engineer 2:
+   - Engineer 3:
 
-// Simulation: Your manager asks for an ETA. What do you say?
-// ...`,
+4. Risk Mitigation:
+   - Load testing plan:
+   - Rollout strategy:
+   - Rollback plan:
+   - Communication plan:
+
+5. Stakeholder Management:
+   - What you tell Sales:
+   - What you tell Leadership:
+   - What you tell your team:
+
+6. Post-Launch Technical Debt:
+   - What gets sacrificed:
+   - Payback plan:
+`,
         hints: [
-            "Look for event listener leaks or cached data not being evicted.",
-            "Check if session cleanup is actually running.",
-            "Simulate: How do you balance investigation time vs applying a temporary fix?",
+            "Perfect is the enemy of good. What's the 80/20 solution?",
+            "How do you balance technical integrity with business reality?",
+            "What's your 'circuit breaker' if things go wrong during launch?",
+            "How do you avoid this situation in the future?",
         ],
     },
     {
         id: 3,
-        title: "Feature Build: Rate Limiter with Business Context",
-        difficulty: "Medium",
+        title: "Cross-Team Architecture Conflict",
+        difficulty: "Hard",
+        type: "scenario",
         description:
-            "Implement a sliding-window rate limiter for the API. Then simulate a scenario: Sales wants higher limits for premium users, but Engineering is concerned about infrastructure costs. How do you design the solution and navigate the conversation?",
-        starterCode: `import { Request, Response, NextFunction } from "express";
+            "Your team maintains the Payments service. The Orders team wants to call your service synchronously in their checkout flow, but you know from experience that payment gateways have high latency (1-3 seconds) and occasional timeouts.\n\nYou propose an async event-driven approach: Orders publishes an event, Payments processes it asynchronously, updates happen via webhooks. This is more resilient but adds complexity.\n\nThe Orders team pushes back: 'That's overengineered. We need a simple REST call. Our deadline is in 3 weeks and we don't have time to build event infrastructure.' Their engineering manager escalates to your director, saying your team is 'blocking' them.\n\nYour director asks: 'Why can't we just give them what they want?'\n\nQuestion: How do you navigate this technical and political situation?",
+        starterCode: `Your response strategy:
 
-interface RateLimiterConfig {
-  windowMs: number;
-  maxRequests: number;
-  premiumMultiplier?: number; // Simulation: new requirement mid-development
-}
+1. Technical Analysis:
+   - Orders team's approach:
+     Pros:
+     Cons:
+     Risks:
+   
+   - Your approach:
+     Pros:
+     Cons:
+     Risks:
 
-export function createRateLimiter(config: RateLimiterConfig) {
-  // TODO: implement sliding window logic
-  // TODO: handle premium tier requirements
-  return (req: Request, res: Response, next: NextFunction) => {
-    next();
-  };
-}
+2. Understanding Their Constraints:
+   - Questions you'd ask Orders team:
+   - Legitimate concerns to validate:
+   - Assumptions to challenge:
 
-// Simulation question: Sales emails you directly asking to increase limits
-// for a specific enterprise customer. How do you respond?`,
+3. Middle Ground Options:
+   
+   Option 1: Compromise solution
+     Description:
+     Addresses their needs:
+     Manages your concerns:
+   
+   Option 2: Phased approach
+     Phase 1 (3 weeks):
+     Phase 2 (later):
+   
+   Option 3: (Your creative alternative)
+     
+
+4. Building Consensus:
+   - How you'd present to Orders team:
+   - How you'd present to your director:
+   - Evidence you'd provide:
+
+5. If You Lose This Debate:
+   - Risk documentation:
+   - Monitoring you'd add:
+   - Future refactor path:
+
+6. Relationship Management:
+   - How you keep this from being adversarial:
+   - How you'd collaborate moving forward:
+`,
         hints: [
-            "Use Redis sorted sets for sliding windows.",
-            "Simulate: How do you document the premium tier decision for future engineers?",
-            "Simulate: What metrics would you add to prove infrastructure impact?",
+            "They have a valid point about timeline. How do you acknowledge that?",
+            "What data or past incidents would strengthen your argument?",
+            "Is there a way to let them ship fast AND address your concerns?",
+            "How do you disagree without being 'the team that says no'?",
         ],
     },
 ];
@@ -111,11 +196,11 @@ export default function Technical2Page() {
     }
 
     function handleRun() {
-        setOutput("▶ Running code...\n\n✅ No syntax errors detected.\n⏱ Execution time: 42ms\n\n[AI Agent]: I see your changes. Now let's discuss the simulation aspect: how would you prioritize this work in a real team environment?");
+        setOutput("▶ Analyzing your response...\n\n✅ Structure detected.\n\n[AI Agent]: I can see your thought process. Let me ask some follow-up questions about your reasoning...");
     }
 
     function handleSubmit() {
-        setOutput("📤 Solution submitted!\n\n[AI Agent]: Thank you. I'm reviewing both your technical solution and your responses to the day-in-life simulation prompts. Please move on to the next task.");
+        setOutput("📤 Response submitted!\n\n[AI Agent]: Thank you for walking me through your thinking. I'm evaluating your structure, trade-off analysis, and communication strategy. Let's move to the next scenario.");
     }
 
     return (
@@ -150,8 +235,8 @@ export default function Technical2Page() {
                             {task.difficulty}
                         </span>
                         <span className="text-xs text-zinc-500">Task {task.id} of {tasks.length}</span>
-                        <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-purple-900/50 text-purple-400">
-                            + Simulation
+                        <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-blue-900/50 text-blue-400">
+                            Scenario
                         </span>
                     </div>
 
@@ -171,7 +256,7 @@ export default function Technical2Page() {
                             </span>
                         </div>
                         <p className="text-sm text-zinc-300 leading-relaxed">
-                            "This interview integrates technical problem-solving with realistic work scenarios. I'll be evaluating both your technical approach and how you handle day-to-day engineering challenges. Walk me through your thinking on both aspects."
+                            "This interview focuses on real-world problem-solving. I'm evaluating how you structure your thinking, weigh trade-offs, handle ambiguity, and communicate with different stakeholders. There's no single right answer — show me your reasoning process."
                         </p>
                     </div>
 
@@ -200,7 +285,10 @@ export default function Technical2Page() {
                         <span className="h-3 w-3 rounded-full bg-red-500" />
                         <span className="h-3 w-3 rounded-full bg-amber-500" />
                         <span className="h-3 w-3 rounded-full bg-emerald-500" />
-                        <span className="ml-2 font-mono">solution.ts</span>
+                        <span className="ml-2 font-mono">response.md</span>
+                        <span className="ml-3 px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider bg-zinc-800 text-zinc-400">
+                            Scenario Analysis
+                        </span>
                     </div>
                     <div className="flex gap-2">
                         <button
@@ -218,13 +306,14 @@ export default function Technical2Page() {
                     </div>
                 </div>
 
-                {/* Code textarea */}
+                {/* Response textarea */}
                 <div className="flex-1 overflow-hidden">
                     <textarea
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         spellCheck={false}
-                        className="h-full w-full resize-none bg-zinc-950 p-5 font-mono text-sm text-emerald-300 leading-relaxed outline-none selection:bg-indigo-600/40"
+                        placeholder="Structure your response here... Walk through your thought process step by step."
+                        className="h-full w-full resize-none bg-zinc-950 p-5 font-mono text-sm text-zinc-300 leading-relaxed outline-none selection:bg-indigo-600/40"
                     />
                 </div>
 

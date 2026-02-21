@@ -9,6 +9,7 @@ const tasks = [
         id: 1,
         title: "Bug Fix: Payment Processing",
         difficulty: "Medium",
+        type: "coding",
         description:
             "The checkout service is silently dropping orders when the payment gateway returns a timeout. Customers are charged but never receive a confirmation email. Investigate the code below and fix the bug.",
         starterCode: `async function processPayment(order: Order) {
@@ -27,66 +28,101 @@ const tasks = [
             "What happens to the order status when a TimeoutError is caught?",
             "Should you differentiate between a timeout and a declined card?",
             "Think about idempotency — can the customer safely retry?",
-            "Simulation: How would you communicate the urgency of this bug to your PM?",
+            "How would you communicate the urgency of this bug to your PM?",
         ],
     },
     {
         id: 2,
-        title: "System Design: URL Shortener",
+        title: "Architecture Decision: Microservices Migration",
         difficulty: "Hard",
+        type: "scenario",
         description:
-            "Design a URL shortening service (like bit.ly) that can handle 100 million new URLs per day. Describe the API, database schema, encoding strategy, and how you'd handle collisions and analytics.",
-        starterCode: `// Describe your design in comments or pseudocode
+            "Your team maintains a monolithic e-commerce application. Leadership wants to migrate to microservices to 'scale better' and 'move faster'. However, your team of 5 engineers is already stretched thin maintaining the current system and building new features. You have a major holiday sale in 3 months.\n\nQuestion: How do you approach this situation? Walk through your thought process, considering technical feasibility, business priorities, team capacity, and risk.",
+        starterCode: `Your structured response:
 
-// 1. API endpoints
-// POST /shorten  { longUrl: string } -> { shortUrl: string }
-// GET  /:code    -> 302 redirect to longUrl
+1. Initial Assessment:
+   - Current system state:
+   - Team capacity:
+   - Business constraints:
 
-// 2. Database schema
-// ...
+2. Key Questions to Ask:
+   - 
+   - 
+   - 
 
-// 3. Encoding strategy
-// ...
+3. Options Analysis:
+   Option A:
+     Pros:
+     Cons:
+     Risk level:
+   
+   Option B:
+     Pros:
+     Cons:
+     Risk level:
 
-// 4. Collision handling
-// ...
+4. Recommendation:
+   
 
-// 5. Analytics
-// ...`,
+5. Communication Strategy:
+   - How you'd present this to leadership:
+   - How you'd align the team:
+`,
         hints: [
-            "Consider Base62 encoding of an auto-increment ID vs hashing.",
-            "How would you partition data across multiple database shards?",
-            "What caching layer would reduce read latency?",
-            "Simulation: Your manager asks for an estimate. What's your process?",
+            "Consider incremental migration vs big-bang rewrite.",
+            "What evidence would you gather to support your recommendation?",
+            "How do you balance technical idealism with business pragmatism?",
+            "What would be your compromise if leadership insists on starting now?",
         ],
     },
     {
         id: 3,
-        title: "Feature Build: Rate Limiter",
-        difficulty: "Medium",
+        title: "Production Incident: Database Slowdown",
+        difficulty: "Hard",
+        type: "scenario",
         description:
-            "Implement a sliding-window rate limiter middleware for an Express.js API. It should allow a configurable number of requests per window (e.g., 100 requests per minute) per API key, and return 429 when the limit is exceeded.",
-        starterCode: `import { Request, Response, NextFunction } from "express";
+            "It's 2 PM on Friday. Your monitoring alerts that API response times have jumped from 200ms to 5 seconds. Customer support is getting complaints. Your database CPU is at 95%, and you notice one query is scanning 10M rows repeatedly. Your CTO is asking for updates every 15 minutes.\n\nQuestion: Walk through your incident response process. What's your step-by-step approach? How do you balance investigation, immediate fixes, communication, and long-term prevention?",
+        starterCode: `Your incident response plan:
 
-interface RateLimiterConfig {
-  windowMs: number;   // e.g. 60_000 for 1 minute
-  maxRequests: number; // e.g. 100
-}
+=== IMMEDIATE (0-15 min) ===
+1. 
+2. 
+3. 
 
-export function createRateLimiter(config: RateLimiterConfig) {
-  // TODO: implement sliding window logic
-  return (req: Request, res: Response, next: NextFunction) => {
-    // 1. Extract API key from request
-    // 2. Check request count in current window
-    // 3. Allow or reject
-    next();
-  };
-}`,
+=== SHORT-TERM (15-60 min) ===
+1. Investigation steps:
+   - 
+   - 
+
+2. Potential quick fixes:
+   - 
+   - 
+
+3. Communication:
+   - To CTO:
+   - To team:
+   - To support:
+
+=== MEDIUM-TERM (1-4 hours) ===
+1. Root cause analysis:
+   
+
+2. Temporary vs permanent fix:
+   
+
+=== LONG-TERM (Post-incident) ===
+1. Prevention measures:
+   - 
+   - 
+
+2. Process improvements:
+   - 
+`,
         hints: [
-            "A sorted set (e.g. Redis ZRANGEBYSCORE) works well for sliding windows.",
-            "Remove expired entries before counting.",
-            "Include Retry-After and X-RateLimit-Remaining headers in the response.",
-            "Simulation: A customer reports hitting the limit unfairly. How do you investigate?",
+            "What's more important: understanding the root cause or restoring service?",
+            "How do you decide whether to roll back, add an index, or kill queries?",
+            "What monitoring gaps does this incident reveal?",
+            "How do you prevent this from happening again without over-engineering?",
         ],
     },
 ];
@@ -164,10 +200,9 @@ export default function TechnicalPage() {
                             </span>
                         </div>
                         <p className="text-sm text-zinc-300 leading-relaxed">
-                            "Take your time reading the problem. I'd love to hear your thought
-                            process — talk me through your approach before you start coding.
-                            What edge cases come to mind? We'll also discuss how you'd handle
-                            this in a real team environment with competing priorities."
+                            {task.type === 'coding' 
+                                ? "Take your time reading the problem. I'd love to hear your thought process — talk me through your approach before you start coding. What edge cases come to mind?" 
+                                : "This is a real-world scenario. I'm interested in your thought process, not a perfect answer. Walk me through how you'd structure your thinking, what questions you'd ask, what trade-offs you'd consider, and how you'd communicate your reasoning to different stakeholders."}
                         </p>
                     </div>
 
@@ -196,7 +231,10 @@ export default function TechnicalPage() {
                         <span className="h-3 w-3 rounded-full bg-red-500" />
                         <span className="h-3 w-3 rounded-full bg-amber-500" />
                         <span className="h-3 w-3 rounded-full bg-emerald-500" />
-                        <span className="ml-2 font-mono">solution.ts</span>
+                        <span className="ml-2 font-mono">{task.type === 'coding' ? 'solution.ts' : 'response.md'}</span>
+                        <span className="ml-3 px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider bg-zinc-800 text-zinc-400">
+                            {task.type === 'coding' ? 'Code' : 'Scenario Analysis'}
+                        </span>
                     </div>
                     <div className="flex gap-2">
                         <button
@@ -214,13 +252,14 @@ export default function TechnicalPage() {
                     </div>
                 </div>
 
-                {/* Code textarea */}
+                {/* Code/Response textarea */}
                 <div className="flex-1 overflow-hidden">
                     <textarea
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         spellCheck={false}
-                        className="h-full w-full resize-none bg-zinc-950 p-5 font-mono text-sm text-emerald-300 leading-relaxed outline-none selection:bg-indigo-600/40"
+                        placeholder={task.type === 'coding' ? 'Write your code here...' : 'Structure your response here... Walk through your thought process step by step.'}
+                        className={`h-full w-full resize-none bg-zinc-950 p-5 font-mono text-sm leading-relaxed outline-none selection:bg-indigo-600/40 ${task.type === 'coding' ? 'text-emerald-300' : 'text-zinc-300'}`}
                     />
                 </div>
 
