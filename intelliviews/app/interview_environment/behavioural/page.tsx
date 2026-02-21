@@ -14,6 +14,7 @@ const scenarios = [
             "How do you de-escalate the situation in the meeting?",
             "What framework would you use to evaluate both proposals objectively?",
             "How do you ensure the person whose approach isn't chosen still feels valued?",
+            "Simulation: Your PM messages you right after asking for a timeline. What do you say?",
         ],
     },
     {
@@ -25,6 +26,7 @@ const scenarios = [
             "What's the first thing you do after learning this news?",
             "How do you prioritise what to build vs what to cut?",
             "How do you communicate uncertainty to stakeholders without losing their confidence?",
+            "Simulation: You have 3 Slack DMs from different stakeholders asking about status. Draft your reply.",
         ],
     },
     {
@@ -36,6 +38,7 @@ const scenarios = [
             "Do you talk to your teammate directly, go to your manager, or both? Why?",
             "How would you structure the conversation with your teammate?",
             "What if they become defensive or dismiss your concerns?",
+            "Simulation: Your teammate just messaged asking if you want to grab lunch. How do you respond?",
         ],
     },
     {
@@ -47,6 +50,7 @@ const scenarios = [
             "What's your immediate course of action?",
             "How do you raise this without sounding accusatory?",
             "What if leadership asks you to keep quiet until after the funding round?",
+            "Simulation: Draft the email you'd send to your engineering lead about this issue.",
         ],
     },
 ];
@@ -60,7 +64,7 @@ export default function BehaviouralPage() {
     >([
         {
             role: "ai",
-            text: "Welcome to the behavioural assessment. I'm going to walk you through several realistic workplace scenarios. There are no right or wrong answers — I'm interested in how you think, communicate, and navigate complex situations. Let's begin with the first scenario. Read it carefully, then tell me how you'd respond.",
+            text: "Welcome to the behavioural assessment. I'm going to walk you through several realistic workplace scenarios that integrate day-in-the-life challenges. There are no right or wrong answers — I'm interested in how you think, communicate, and navigate complex situations. Let's begin with the first scenario. Read it carefully, then tell me how you'd respond.",
         },
     ]);
     const [inputValue, setInputValue] = useState("");
@@ -116,8 +120,8 @@ export default function BehaviouralPage() {
                             key={s.id}
                             onClick={() => handleScenarioSwitch(idx)}
                             className={`flex-1 px-2 py-3 text-xs font-medium transition-colors ${idx === activeScenario
-                                    ? "bg-zinc-800 text-indigo-400 border-b-2 border-indigo-500"
-                                    : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
+                                ? "bg-zinc-800 text-indigo-400 border-b-2 border-indigo-500"
+                                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
                                 }`}
                         >
                             {s.id}. {s.title}
@@ -156,8 +160,8 @@ export default function BehaviouralPage() {
                                 >
                                     <span
                                         className={`mt-0.5 h-4 w-4 shrink-0 rounded-full flex items-center justify-center text-[10px] ${i < currentFollowUp
-                                                ? "bg-emerald-600 text-white"
-                                                : "bg-zinc-800 text-zinc-500"
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-zinc-800 text-zinc-500"
                                             }`}
                                     >
                                         {i < currentFollowUp ? "✓" : i + 1}
@@ -219,8 +223,8 @@ export default function BehaviouralPage() {
                         >
                             <div
                                 className={`max-w-[75%] rounded-xl px-4 py-3 text-sm leading-relaxed ${msg.role === "candidate"
-                                        ? "bg-indigo-600 text-white rounded-br-sm"
-                                        : "bg-zinc-800 text-zinc-200 rounded-bl-sm"
+                                    ? "bg-indigo-600 text-white rounded-br-sm"
+                                    : "bg-zinc-800 text-zinc-200 rounded-bl-sm"
                                     }`}
                             >
                                 {msg.text}
@@ -256,16 +260,16 @@ export default function BehaviouralPage() {
             {/* ─── Bottom navigation ─── */}
             <div className="absolute bottom-12 left-0 right-0 flex items-center justify-between border-t border-zinc-800 bg-zinc-900 px-6 py-3">
                 <Link
-                    href="/interview_environment/technical"
+                    href="/interview_environment/technical2"
                     className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
                 >
-                    ← Back to Technical
+                    ← Back to Technical 2
                 </Link>
                 <Link
-                    href="/interview_environment/simulation"
-                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
+                    href="/interview_environment"
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
                 >
-                    Continue to Simulation →
+                    Complete Interview ✓
                 </Link>
             </div>
         </div>

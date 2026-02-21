@@ -3,95 +3,99 @@
 import Link from "next/link";
 import { useState } from "react";
 
-/* ─── Task data ─── */
+/* ─── Task data with integrated simulation ─── */
 const tasks = [
     {
         id: 1,
-        title: "Bug Fix: Payment Processing",
-        difficulty: "Medium",
+        title: "System Design: Real-time Collaboration",
+        difficulty: "Hard",
         description:
-            "The checkout service is silently dropping orders when the payment gateway returns a timeout. Customers are charged but never receive a confirmation email. Investigate the code below and fix the bug.",
-        starterCode: `async function processPayment(order: Order) {
-  const gateway = new PaymentGateway();
+            "Design a real-time collaborative document editing system (like Google Docs). Include conflict resolution, operational transforms, and how you'd handle 10,000 concurrent users. Then simulate prioritizing this feature against other team demands.",
+        starterCode: `// Describe your design in comments or pseudocode
 
-  // BUG: timeout errors are swallowed here
-  try {
-    const result = await gateway.charge(order.total, order.paymentMethod);
-    await db.orders.update(order.id, { status: "paid", txnId: result.id });
-    await emailService.sendConfirmation(order.customerEmail, order);
-  } catch (err) {
-    console.log("Payment failed");
-  }
-}`,
+// 1. Architecture overview
+// ...
+
+// 2. Conflict resolution strategy
+// ...
+
+// 3. Operational transforms
+// ...
+
+// 4. Scalability considerations
+// ...
+
+// 5. Day-in-life simulation: How would you prioritize this against urgent bug fixes?
+// ...`,
         hints: [
-            "What happens to the order status when a TimeoutError is caught?",
-            "Should you differentiate between a timeout and a declined card?",
-            "Think about idempotency — can the customer safely retry?",
-            "Simulation: How would you communicate the urgency of this bug to your PM?",
+            "Consider CRDTs vs Operational Transforms.",
+            "How do you handle network partitions?",
+            "Simulate: Your PM says this feature needs to ship in 2 weeks, but there's a P1 production bug. How do you respond?",
         ],
     },
     {
         id: 2,
-        title: "System Design: URL Shortener",
+        title: "Debugging: Memory Leak in Production",
         difficulty: "Hard",
         description:
-            "Design a URL shortening service (like bit.ly) that can handle 100 million new URLs per day. Describe the API, database schema, encoding strategy, and how you'd handle collisions and analytics.",
-        starterCode: `// Describe your design in comments or pseudocode
+            "A production service is experiencing gradual memory growth leading to OOM crashes every 6 hours. You have heap dumps, metrics, and logs. Debug the issue and explain your process. Then simulate how you'd communicate this to stakeholders.",
+        starterCode: `// Investigation notes:
+// - Memory grows from 500MB to 2GB over 6 hours
+// - Heap dump shows large arrays of user sessions
+// - No obvious circular references
+// - Garbage collection running but not freeing memory
 
-// 1. API endpoints
-// POST /shorten  { longUrl: string } -> { shortUrl: string }
-// GET  /:code    -> 302 redirect to longUrl
+// Your debugging approach:
+// 1. ...
+// 2. ...
 
-// 2. Database schema
+// Root cause hypothesis:
 // ...
 
-// 3. Encoding strategy
+// Fix:
 // ...
 
-// 4. Collision handling
-// ...
-
-// 5. Analytics
+// Simulation: Your manager asks for an ETA. What do you say?
 // ...`,
         hints: [
-            "Consider Base62 encoding of an auto-increment ID vs hashing.",
-            "How would you partition data across multiple database shards?",
-            "What caching layer would reduce read latency?",
-            "Simulation: Your manager asks for an estimate. What's your process?",
+            "Look for event listener leaks or cached data not being evicted.",
+            "Check if session cleanup is actually running.",
+            "Simulate: How do you balance investigation time vs applying a temporary fix?",
         ],
     },
     {
         id: 3,
-        title: "Feature Build: Rate Limiter",
+        title: "Feature Build: Rate Limiter with Business Context",
         difficulty: "Medium",
         description:
-            "Implement a sliding-window rate limiter middleware for an Express.js API. It should allow a configurable number of requests per window (e.g., 100 requests per minute) per API key, and return 429 when the limit is exceeded.",
+            "Implement a sliding-window rate limiter for the API. Then simulate a scenario: Sales wants higher limits for premium users, but Engineering is concerned about infrastructure costs. How do you design the solution and navigate the conversation?",
         starterCode: `import { Request, Response, NextFunction } from "express";
 
 interface RateLimiterConfig {
-  windowMs: number;   // e.g. 60_000 for 1 minute
-  maxRequests: number; // e.g. 100
+  windowMs: number;
+  maxRequests: number;
+  premiumMultiplier?: number; // Simulation: new requirement mid-development
 }
 
 export function createRateLimiter(config: RateLimiterConfig) {
   // TODO: implement sliding window logic
+  // TODO: handle premium tier requirements
   return (req: Request, res: Response, next: NextFunction) => {
-    // 1. Extract API key from request
-    // 2. Check request count in current window
-    // 3. Allow or reject
     next();
   };
-}`,
+}
+
+// Simulation question: Sales emails you directly asking to increase limits
+// for a specific enterprise customer. How do you respond?`,
         hints: [
-            "A sorted set (e.g. Redis ZRANGEBYSCORE) works well for sliding windows.",
-            "Remove expired entries before counting.",
-            "Include Retry-After and X-RateLimit-Remaining headers in the response.",
-            "Simulation: A customer reports hitting the limit unfairly. How do you investigate?",
+            "Use Redis sorted sets for sliding windows.",
+            "Simulate: How do you document the premium tier decision for future engineers?",
+            "Simulate: What metrics would you add to prove infrastructure impact?",
         ],
     },
 ];
 
-export default function TechnicalPage() {
+export default function Technical2Page() {
     const [activeTask, setActiveTask] = useState(0);
     const [code, setCode] = useState(tasks[0].starterCode);
     const [showHints, setShowHints] = useState(false);
@@ -107,11 +111,11 @@ export default function TechnicalPage() {
     }
 
     function handleRun() {
-        setOutput("▶ Running code...\n\n✅ No syntax errors detected.\n⏱ Execution time: 42ms\n\n[AI Agent]: I see your changes. Let me analyze your approach... Also, tell me how you'd prioritize finishing this vs responding to a production incident.");
+        setOutput("▶ Running code...\n\n✅ No syntax errors detected.\n⏱ Execution time: 42ms\n\n[AI Agent]: I see your changes. Now let's discuss the simulation aspect: how would you prioritize this work in a real team environment?");
     }
 
     function handleSubmit() {
-        setOutput("📤 Solution submitted!\n\n[AI Agent]: Thank you. I'm reviewing your solution now. I'll assess correctness, code quality, edge-case handling, and your reasoning. Please move on to the next task.");
+        setOutput("📤 Solution submitted!\n\n[AI Agent]: Thank you. I'm reviewing both your technical solution and your responses to the day-in-life simulation prompts. Please move on to the next task.");
     }
 
     return (
@@ -146,6 +150,9 @@ export default function TechnicalPage() {
                             {task.difficulty}
                         </span>
                         <span className="text-xs text-zinc-500">Task {task.id} of {tasks.length}</span>
+                        <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-purple-900/50 text-purple-400">
+                            + Simulation
+                        </span>
                     </div>
 
                     <h2 className="text-xl font-bold mb-3">{task.title}</h2>
@@ -164,10 +171,7 @@ export default function TechnicalPage() {
                             </span>
                         </div>
                         <p className="text-sm text-zinc-300 leading-relaxed">
-                            "Take your time reading the problem. I'd love to hear your thought
-                            process — talk me through your approach before you start coding.
-                            What edge cases come to mind? We'll also discuss how you'd handle
-                            this in a real team environment with competing priorities."
+                            "This interview integrates technical problem-solving with realistic work scenarios. I'll be evaluating both your technical approach and how you handle day-to-day engineering challenges. Walk me through your thinking on both aspects."
                         </p>
                     </div>
 
@@ -238,16 +242,16 @@ export default function TechnicalPage() {
             {/* ─── Navigation footer inside panel ─── */}
             <div className="absolute bottom-12 left-0 right-0 flex items-center justify-between border-t border-zinc-800 bg-zinc-900 px-6 py-3">
                 <Link
-                    href="/interview_environment"
+                    href="/interview_environment/technical"
                     className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
                 >
-                    ← Back to Dashboard
+                    ← Back to Technical 1
                 </Link>
                 <Link
-                    href="/interview_environment/technical2"
+                    href="/interview_environment/behavioural"
                     className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
                 >
-                    Continue to Technical 2 →
+                    Continue to Behavioural →
                 </Link>
             </div>
         </div>

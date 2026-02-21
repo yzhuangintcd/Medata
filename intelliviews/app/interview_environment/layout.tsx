@@ -1,22 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
-
-const navItems = [
-    { label: "Dashboard", href: "/interview_environment" },
-    { label: "Technical", href: "/interview_environment/technical" },
-    { label: "Behavioural", href: "/interview_environment/behavioural" },
-    { label: "Simulation", href: "/interview_environment/simulation" },
-];
 
 export default function InterviewLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const pathname = usePathname();
     const [timer] = useState("45:00");
 
     return (
@@ -31,25 +21,6 @@ export default function InterviewLayout({
                         Intelli<span className="text-indigo-400">View</span>
                     </span>
                 </div>
-
-                {/* Navigation */}
-                <nav className="hidden md:flex items-center gap-1">
-                    {navItems.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                                        ? "bg-indigo-600/20 text-indigo-400"
-                                        : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
-                                    }`}
-                            >
-                                {item.label}
-                            </Link>
-                        );
-                    })}
-                </nav>
 
                 {/* Timer & candidate info */}
                 <div className="flex items-center gap-4">

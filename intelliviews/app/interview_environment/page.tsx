@@ -19,61 +19,61 @@ const interviewers: (InterviewerDef & {
   step: number;
   focus: string[];
 })[] = [
-  {
-    id: "technical",
-    name: "Alex Chen",
-    role: "Senior Engineer",
-    title: "Technical Discussion",
-    description:
-      "A conversational technical session where you'll walk through coding scenarios, discuss system design approaches, and demonstrate your problem-solving process.",
-    href: "/interview_environment/technical",
-    duration: "30 min",
-    step: 1,
-    accent: "#2a6b8a",
-    focus: ["Problem Solving", "Code Walkthrough", "System Thinking"],
-    skinTone: "#deb887",
-    hairColor: "#1a1a2e",
-    hairStyle: "short",
-    shirtColor: "#2a5a8a",
-    seatX: -1.6,
-  },
-  {
-    id: "behavioural",
-    name: "Maya Johnson",
-    role: "People & Culture Lead",
-    title: "Behavioural Conversation",
-    description:
-      "A warm, open discussion about your experiences, how you handle workplace situations, collaborate with teams, and approach challenges with integrity.",
-    href: "/interview_environment/behavioural",
-    duration: "25 min",
-    step: 2,
-    accent: "#6b4a8a",
-    focus: ["Communication", "Teamwork", "Leadership"],
-    skinTone: "#8d5524",
-    hairColor: "#2a1a0a",
-    hairStyle: "long",
-    shirtColor: "#6b4a8a",
-    seatX: 0,
-  },
-  {
-    id: "simulation",
-    name: "Jordan Park",
-    role: "Engineering Manager",
-    title: "Day-in-the-Life Simulation",
-    description:
-      "Experience a realistic work scenario — manage tasks, respond to messages, and prioritize work just like you would on day one. Show us how you operate.",
-    href: "/interview_environment/simulation",
-    duration: "35 min",
-    step: 3,
-    accent: "#8a6b2a",
-    focus: ["Prioritization", "Decision Making", "Execution"],
-    skinTone: "#f1c27d",
-    hairColor: "#4a3728",
-    hairStyle: "medium",
-    shirtColor: "#8a6b2a",
-    seatX: 1.6,
-  },
-];
+    {
+      id: "technical1",
+      name: "Alex Chen",
+      role: "Senior Engineer",
+      title: "Technical Interviewer 1",
+      description:
+        "Technical stage with integrated simulation: Solve coding scenarios, discuss system design, and respond to realistic work challenges throughout the interview.",
+      href: "/interview_environment/technical",
+      duration: "30 min",
+      step: 1,
+      accent: "#2a6b8a",
+      focus: ["Problem Solving", "Code Walkthrough", "System Thinking", "Simulation"],
+      skinTone: "#deb887",
+      hairColor: "#1a1a2e",
+      hairStyle: "short",
+      shirtColor: "#2a5a8a",
+      seatX: -1.6,
+    },
+    {
+      id: "technical2",
+      name: "Jordan Park",
+      role: "Engineering Manager",
+      title: "Technical Interviewer 2",
+      description:
+        "Second technical stage with simulation: Tackle system design, debugging, and day-in-the-life scenarios woven into the interview process.",
+      href: "/interview_environment/technical2",
+      duration: "30 min",
+      step: 2,
+      accent: "#8a6b2a",
+      focus: ["System Design", "Debugging", "Execution", "Simulation"],
+      skinTone: "#f1c27d",
+      hairColor: "#4a3728",
+      hairStyle: "medium",
+      shirtColor: "#8a6b2a",
+      seatX: 0,
+    },
+    {
+      id: "behavioural",
+      name: "Maya Johnson",
+      role: "People & Culture Lead",
+      title: "Behavioural Interviewer",
+      description:
+        "Behavioural stage with simulation: Discuss workplace experiences, teamwork, and leadership, while responding to realistic scenario prompts during the interview.",
+      href: "/interview_environment/behavioural",
+      duration: "25 min",
+      step: 3,
+      accent: "#6b4a8a",
+      focus: ["Communication", "Teamwork", "Leadership", "Simulation"],
+      skinTone: "#8d5524",
+      hairColor: "#2a1a0a",
+      hairStyle: "long",
+      shirtColor: "#6b4a8a",
+      seatX: 1.6,
+    },
+  ];
 
 export default function InterviewDashboard() {
   const router = useRouter();
@@ -115,9 +115,8 @@ export default function InterviewDashboard() {
 
       {/* Top Overlay */}
       <div
-        className={`relative z-10 flex flex-col items-center pointer-events-none transition-all duration-1000 ${
-          mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
-        }`}
+        className={`relative z-10 flex flex-col items-center pointer-events-none transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
+          }`}
       >
         <section className="text-center pt-4 pb-2">
           <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#5a8a5e] mb-1">
@@ -140,11 +139,10 @@ export default function InterviewDashboard() {
               onClick={() => handleSelect(p.id)}
               onMouseEnter={() => setHoveredId(p.id)}
               onMouseLeave={() => setHoveredId(null)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
-                hoveredId === p.id
-                  ? "bg-white shadow-md border-[#c0b898] text-[#2a3a2a]"
-                  : "bg-white/60 border-[#d8d0c0] text-[#6b6a5a] hover:bg-white/80"
-              }`}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${hoveredId === p.id
+                ? "bg-white shadow-md border-[#c0b898] text-[#2a3a2a]"
+                : "bg-white/60 border-[#d8d0c0] text-[#6b6a5a] hover:bg-white/80"
+                }`}
             >
               <span className="flex items-center justify-center h-5 w-5 rounded-full bg-[#f0ebe3] text-[10px] font-bold text-[#6b5a3a] border border-[#d8d0c0]">
                 {p.step}
@@ -160,17 +158,15 @@ export default function InterviewDashboard() {
 
       {/* Bottom Panel */}
       <div
-        className={`relative z-10 flex flex-col items-center pb-4 px-4 pointer-events-none transition-all duration-1000 delay-300 ${
-          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-        }`}
+        className={`relative z-10 flex flex-col items-center pb-4 px-4 pointer-events-none transition-all duration-1000 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          }`}
       >
         {/* Hover detail card */}
         <section
-          className={`w-full max-w-xl transition-all duration-500 pointer-events-auto ${
-            hovered
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-3 pointer-events-none"
-          }`}
+          className={`w-full max-w-xl transition-all duration-500 pointer-events-auto ${hovered
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-3 pointer-events-none"
+            }`}
         >
           {hovered && (
             <div className="rounded-2xl border border-[#d8d0c0] bg-white/90 backdrop-blur-lg p-5 shadow-lg">
