@@ -456,16 +456,6 @@ export default function ConferenceScene({
             onClick={() => onSelect(p.id)}
           />
         ))}
-
-        <Text
-          position={[0, 1.05, 1.3]}
-          fontSize={0.07}
-          color="#3a5a4a"
-          anchorX="center"
-          anchorY="bottom"
-        >
-          Your Seat
-        </Text>
       </Canvas>
     </div>
   );

@@ -119,9 +119,6 @@ export default function InterviewDashboard() {
           }`}
       >
         <section className="text-center pt-4 pb-2">
-          <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#5a8a5e] mb-1">
-            Interview in Progress
-          </p>
           <h1 className="text-2xl font-bold tracking-tight text-[#2a3a2a] drop-shadow-sm">
             Welcome to Your Interview 👋
           </h1>
@@ -232,36 +229,6 @@ export default function InterviewDashboard() {
               </div>
             </div>
           )}
-        </section>
-
-        {/* Encouragement bar */}
-        <section className="w-full max-w-xl mt-3 pointer-events-auto">
-          <div className="rounded-xl border border-[#d8d0c0] bg-white/70 backdrop-blur-md p-3">
-            <div className="flex items-center justify-center gap-1 mb-2">
-              {interviewers.map((p, i) => (
-                <div key={p.id} className="flex items-center">
-                  <div className="flex items-center gap-1.5 px-2 py-0.5">
-                    <span className="h-5 w-5 rounded-full bg-[#f0ebe3] border border-[#d8d0c0] flex items-center justify-center text-[9px] font-bold text-[#6b5a3a]">
-                      {p.step}
-                    </span>
-                    <span className="text-[10px] text-[#6b6a5a] font-medium">
-                      {p.title.split(" ").slice(0, 1).join("")}
-                    </span>
-                  </div>
-                  {i < interviewers.length - 1 && (
-                    <div className="w-8 h-px bg-[#d8d0c0]" />
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="text-center border-t border-[#e8e0d4] pt-2">
-              <p className="text-[10px] text-[#5a8a5e] font-medium">
-                🌟 You were selected from many applicants for this interview —
-                you belong here. Take a breath, be yourself, and show them what
-                you can do.
-              </p>
-            </div>
-          </div>
         </section>
       </div>
     </div>
