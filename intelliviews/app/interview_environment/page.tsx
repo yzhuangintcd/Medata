@@ -91,15 +91,15 @@ export default function InterviewDashboard() {
   }
 
   return (
-    <div className="relative flex flex-col min-h-[calc(100vh-7rem)] bg-gradient-to-b from-[#87CEEB] via-[#B0D9F1] to-[#E0F2FF] overflow-hidden">
+    <div className="relative flex flex-col min-h-[calc(100vh-7rem)] bg-zinc-950 overflow-hidden">
       {/* 3D Canvas */}
       <div className="absolute inset-0 z-0">
         <Suspense
           fallback={
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-[#87CEEB] via-[#B0D9F1] to-[#E0F2FF]">
+            <div className="w-full h-full flex items-center justify-center bg-zinc-950">
               <div className="flex flex-col items-center gap-3">
-                <div className="h-10 w-10 rounded-full border-2 border-[#8a7a5a] border-t-transparent animate-spin" />
-                <span className="text-sm text-[#6b5a3a] font-medium">
+                <div className="h-10 w-10 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                <span className="text-sm text-zinc-400 font-medium">
                   Preparing your interview room...
                 </span>
               </div>

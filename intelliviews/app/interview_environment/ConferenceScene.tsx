@@ -488,7 +488,7 @@ export default function ConferenceScene({
           toneMappingExposure: 1.5,
         }}
       >
-        <color attach="background" args={["#4A90B8"]} />
+        <color attach="background" args={["#18181b"]} />
         <CameraRig />
         <Lighting />
         <Environment preset="apartment" background={false} environmentIntensity={0.5} />

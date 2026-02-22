@@ -35,7 +35,7 @@ export default function InterviewLayout({
             </header>
 
             {/* ─── Main content ─── */}
-            <main className="flex-1 overflow-y-auto">{children}</main>
+            <main className="flex-1 overflow-hidden">{children}</main>
 
             {/* ─── Footer ─── */}
             <footer className="border-t border-zinc-800 bg-zinc-900 px-6 py-3 flex items-center justify-between text-xs text-zinc-500">
