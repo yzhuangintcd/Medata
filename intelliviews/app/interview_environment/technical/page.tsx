@@ -200,8 +200,8 @@ export default function TechnicalPage() {
                             </span>
                         </div>
                         <p className="text-sm text-zinc-300 leading-relaxed">
-                            {task.type === 'coding' 
-                                ? "Take your time reading the problem. I'd love to hear your thought process — talk me through your approach before you start coding. What edge cases come to mind?" 
+                            {task.type === 'coding'
+                                ? "Take your time reading the problem. I'd love to hear your thought process — talk me through your approach before you start coding. What edge cases come to mind?"
                                 : "This is a real-world scenario. I'm interested in your thought process, not a perfect answer. Walk me through how you'd structure your thinking, what questions you'd ask, what trade-offs you'd consider, and how you'd communicate your reasoning to different stakeholders."}
                         </p>
                     </div>

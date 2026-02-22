@@ -107,6 +107,30 @@ export default function BehaviouralPage() {
             
             setChatHistory(newHistory);
             setCurrentFollowUp((prev) => prev + 1);
+
+            // Save to database after successful AI response
+            try {
+                await fetch('/api/save-response', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        candidateId: `candidate-${Date.now()}`, // TODO: Replace with actual candidate ID
+                        candidateEmail: 'candidate@example.com', // TODO: Replace with actual email
+                        interviewType: 'behavioural',
+                        taskId: scenario.id,
+                        taskTitle: scenario.title,
+                        chatHistory: newHistory,
+                        metadata: {
+                            currentFollowUp: currentFollowUp + 1,
+                            tokenCount: data.tokenUsage?.cumulativeTotal || tokenCount,
+                        },
+                    }),
+                });
+                console.log('✅ Response saved to database');
+            } catch (dbError) {
+                console.error('❌ Failed to save to database:', dbError);
+                // Don't interrupt the interview flow if DB save fails
+            }
         } catch (error) {
             console.error("❌ Error getting AI response:", error);
             // Remove the last candidate message and show error
@@ -121,7 +145,33 @@ export default function BehaviouralPage() {
         }
     }
 
-    function handleScenarioSwitch(idx: number) {
+    async function handleScenarioSwitch(idx: number) {
+        // Save current scenario before switching
+        if (chatHistory.length > 1) { // Only save if there's actual conversation
+            try {
+                await fetch('/api/save-response', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        candidateId: `candidate-${Date.now()}`, // TODO: Replace with actual candidate ID
+                        candidateEmail: 'candidate@example.com', // TODO: Replace with actual email
+                        interviewType: 'behavioural',
+                        taskId: scenario.id,
+                        taskTitle: scenario.title,
+                        chatHistory: chatHistory,
+                        metadata: {
+                            completed: true,
+                            totalFollowUps: currentFollowUp,
+                            tokenCount,
+                        },
+                    }),
+                });
+                console.log('✅ Scenario saved before switch');
+            } catch (error) {
+                console.error('❌ Failed to save scenario:', error);
+            }
+        }
+
         setActiveScenario(idx);
         setCurrentFollowUp(0);
         setChatHistory([

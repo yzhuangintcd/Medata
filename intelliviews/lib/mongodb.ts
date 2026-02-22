@@ -6,17 +6,37 @@ if (!MONGODB_URI) {
   throw new Error("Please define MONGODB_URI in .env.local");
 }
 
-// Extend global type to include mongo cache
+// Extend global type to include mongoose cache
 declare global {
-  var mongo: { conn: typeof mongoose | null } | undefined;
+  // eslint-disable-next-line no-var
+  var mongoose: {
+    conn: typeof import("mongoose") | null;
+    promise: Promise<typeof import("mongoose")> | null;
+  };
 }
 
-// Use a global connection to avoid multiple instances during dev.
-let cached = globalThis.mongo || { conn: null };
+// Initialize the global connection cache
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
 
 export async function connectToMongo() {
-  if (cached.conn) return cached.conn;
-  cached.conn = await mongoose.connect(MONGODB_URI, { bufferCommands: false });
-  globalThis.mongo = cached;
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI);
+  }
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+
   return cached.conn;
 }

@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import type { InterviewerDef } from "./ConferenceScene";
 import type OrigConferenceScene from "./ConferenceScene";
@@ -92,6 +93,14 @@ export default function InterviewDashboard() {
 
   return (
     <div className="relative flex flex-col min-h-[calc(100vh-7rem)] bg-[#f5f0e8] overflow-hidden">
+      {/* Admin Link */}
+      <Link
+        href="/admin/responses"
+        className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-lg bg-zinc-900 text-zinc-100 text-xs font-medium hover:bg-zinc-800 transition-colors pointer-events-auto"
+      >
+        📊 View Responses
+      </Link>
+
       {/* 3D Canvas */}
       <div className="absolute inset-0 z-0">
         <Suspense
