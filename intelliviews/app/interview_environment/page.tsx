@@ -118,14 +118,14 @@ export default function InterviewDashboard() {
         className={`relative z-10 flex flex-col items-center pointer-events-none transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
           }`}
       >
-        <section className="text-center pt-4 pb-2">
+        <section className="text-center pt-12 pb-4">
           <h1 className="text-2xl font-bold tracking-tight text-[#2a3a2a] drop-shadow-sm">
             Welcome to Your Interview 👋
           </h1>
         </section>
 
         {/* Step indicators */}
-        <section className="flex items-center gap-3 mt-2 pointer-events-auto">
+        <section className="flex items-center gap-3 mt-6 pointer-events-auto">
           {interviewers.map((p) => (
             <button
               key={p.id}
