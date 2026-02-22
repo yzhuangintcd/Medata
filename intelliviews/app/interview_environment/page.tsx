@@ -128,10 +128,13 @@ export default function InterviewDashboard() {
       >
         <section className="text-center pt-12 pb-4">
           <h1 className="text-2xl font-bold tracking-tight text-[#2a3a2a] drop-shadow-sm">
-            Welcome to Your Interview 👋
+            Welcome to Your Interview 
           </h1>
           <p className="text-sm text-[#5a8a5e] mt-2 font-medium">
-            ☕ Grab a coffee — this will take about 1.5 hours
+            Grab a coffee — this will take about 1.5 hours
+          </p>
+          <p className="text-sm text-[#5a8a5e] mt-2 font-medium">
+            Don't worry We will notify you of time!
           </p>
         </section>
 

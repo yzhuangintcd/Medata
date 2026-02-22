@@ -286,18 +286,6 @@ function Ceiling() {
   );
 }
 
-function BrandingText() {
-  return (
-    <>
-      <Text position={[0, 3.8, -4.44]} fontSize={0.18} color="#5b7a6a" anchorX="center" anchorY="middle">
-        INTELLIVIEW
-      </Text>
-      <Text position={[0, 3.55, -4.44]} fontSize={0.06} color="#a0b0a5" anchorX="center" anchorY="middle">
-        Where Great Careers Begin
-      </Text>
-    </>
-  );
-}
 
 function Room() {
   return (
@@ -307,7 +295,6 @@ function Room() {
       <LeftWall />
       <RightWall />
       <Ceiling />
-      <BrandingText />
     </group>
   );
 }
