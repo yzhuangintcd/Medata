@@ -129,9 +129,8 @@ export default function InterviewDashboard() {
           {interviewers.map((p) => (
             <button
               key={p.id}
-              onClick={() => handleSelect(p.id)}
+              onClick={() => setHoveredId(p.id)}
               onMouseEnter={() => setHoveredId(p.id)}
-              onMouseLeave={() => setHoveredId(null)}
               className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-sm font-medium transition-all border ${hoveredId === p.id
                 ? "bg-white shadow-lg border-[#c0b898] text-[#2a3a2a] scale-105"
                 : "bg-white/70 border-[#d8d0c0] text-[#6b6a5a] hover:bg-white/90 hover:shadow-md"
@@ -156,13 +155,23 @@ export default function InterviewDashboard() {
       >
         {/* Hover detail card */}
         <section
+          onMouseEnter={() => hovered && setHoveredId(hovered.id)}
           className={`w-full max-w-xl transition-all duration-500 pointer-events-auto ${hovered
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-3 pointer-events-none"
             }`}
         >
           {hovered && (
-            <div className="rounded-2xl border border-[#d8d0c0] bg-white/90 backdrop-blur-lg p-5 shadow-lg">
+            <div className="rounded-2xl border border-[#d8d0c0] bg-white/90 backdrop-blur-lg p-5 shadow-lg relative">
+              {/* Close button */}
+              <button
+                onClick={() => setHoveredId(null)}
+                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-800 transition-colors flex items-center justify-center text-sm font-bold"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+              
               <div className="flex items-start gap-4">
                 {/* Avatar icon */}
                 <div className="relative shrink-0">
