@@ -194,69 +194,138 @@ function HairMesh({
 }
 
 /* ════════════════════════════════════════════════════════════
-   ROOM — clean, bright, minimal
+   ROOM COMPONENTS
    ════════════════════════════════════════════════════════════ */
-function Room() {
+
+function Floor() {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+      <planeGeometry args={[14, 10]} />
+      <meshStandardMaterial color="#8B7355" roughness={0.6} metalness={0.1} />
+    </mesh>
+  );
+}
+
+function BackWall() {
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-        <planeGeometry args={[14, 10]} />
-        <meshStandardMaterial color="#d4c8b0" roughness={0.7} />
-      </mesh>
-
+      {/* Main wall - solid white background */}
       <mesh position={[0, 2.5, -4.5]}>
         <planeGeometry args={[14, 5]} />
         <meshStandardMaterial color="#f5f2ed" roughness={0.95} />
       </mesh>
 
-      <mesh position={[-7, 2.5, 0]} rotation={[0, Math.PI / 2, 0]}>
-        <planeGeometry args={[10, 5]} />
-        <meshStandardMaterial color="#f2eee8" roughness={0.95} />
-      </mesh>
-      <mesh position={[7, 2.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
-        <planeGeometry args={[10, 5]} />
-        <meshStandardMaterial color="#f2eee8" roughness={0.95} />
-      </mesh>
-
-      <mesh position={[0, 5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[14, 10]} />
-        <meshStandardMaterial color="#faf9f7" roughness={1} />
-      </mesh>
-
-      {/* Windows */}
-      {[-3.5, 3.5].map((x) => (
+      {/* Windows on back wall */}
+      {[
+        { x: -4.5 },  // Left window
+        { x: 4.5 }    // Right window
+      ].map(({ x }) => (
         <group key={x}>
-          <mesh position={[x, 3.2, -4.44]}>
-            <planeGeometry args={[2.0, 2.2]} />
-            <meshStandardMaterial
-              color="#daeaf2"
-              roughness={0.1}
-              emissive="#e8f2f8"
-              emissiveIntensity={0.3}
-            />
+          {/* Sky background */}
+          <mesh position={[x, 3.2, -4.48]}>
+            <planeGeometry args={[2.1, 2.3]} />
+            <meshStandardMaterial color="#87CEEB" roughness={1} />
           </mesh>
-          <mesh position={[x, 3.2, -4.43]}>
-            <planeGeometry args={[2.15, 2.35]} />
+
+          {/* Frame border - top */}
+          <mesh position={[x, 4.35, -4.42]}>
+            <boxGeometry args={[2.2, 0.1, 0.1]} />
+            <meshStandardMaterial color="#8a7a60" roughness={0.4} metalness={0.05} />
+          </mesh>
+
+          {/* Frame border - bottom */}
+          <mesh position={[x, 2.05, -4.42]}>
+            <boxGeometry args={[2.2, 0.1, 0.1]} />
+            <meshStandardMaterial color="#8a7a60" roughness={0.4} metalness={0.05} />
+          </mesh>
+
+          {/* Frame border - left */}
+          <mesh position={[x - 1.05, 3.2, -4.42]}>
+            <boxGeometry args={[0.1, 2.3, 0.1]} />
+            <meshStandardMaterial color="#8a7a60" roughness={0.4} metalness={0.05} />
+          </mesh>
+
+          {/* Frame border - right */}
+          <mesh position={[x + 1.05, 3.2, -4.42]}>
+            <boxGeometry args={[0.1, 2.3, 0.1]} />
+            <meshStandardMaterial color="#8a7a60" roughness={0.4} metalness={0.05} />
+          </mesh>
+
+          {/* Vertical mullion - center */}
+          <mesh position={[x, 3.2, -4.4]}>
+            <boxGeometry args={[0.05, 2.3, 0.06]} />
+            <meshStandardMaterial color="#8a7a60" roughness={0.4} metalness={0.05} />
+          </mesh>
+
+          {/* Horizontal mullion - center */}
+          <mesh position={[x, 3.2, -4.4]}>
+            <boxGeometry args={[2.1, 0.05, 0.06]} />
+            <meshStandardMaterial color="#8a7a60" roughness={0.4} metalness={0.05} />
+          </mesh>
+
+          {/* Window sill */}
+          <mesh position={[x, 2.0, -4.38]}>
+            <boxGeometry args={[2.4, 0.1, 0.18]} />
             <meshStandardMaterial color="#c0b090" roughness={0.5} />
           </mesh>
-          <mesh position={[x, 3.2, -4.42]}>
-            <boxGeometry args={[0.02, 2.2, 0.015]} />
-            <meshStandardMaterial color="#c0b090" />
-          </mesh>
-          <mesh position={[x, 3.2, -4.42]}>
-            <boxGeometry args={[2.0, 0.02, 0.015]} />
-            <meshStandardMaterial color="#c0b090" />
-          </mesh>
-          <pointLight position={[x, 3.2, -3.8]} intensity={12} color="#fff8e8" distance={7} />
+
+          {/* Natural light */}
+          <pointLight position={[x, 3.2, -4.1]} intensity={12} color="#fff8e8" distance={8} />
         </group>
       ))}
+    </group>
+  );
+}
 
+function LeftWall() {
+  return (
+    <mesh position={[-7, 2.5, 0]} rotation={[0, Math.PI / 2, 0]}>
+      <planeGeometry args={[10, 5]} />
+      <meshStandardMaterial color="#f2eee8" roughness={0.95} />
+    </mesh>
+  );
+}
+
+function RightWall() {
+  return (
+    <mesh position={[7, 2.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
+      <planeGeometry args={[10, 5]} />
+      <meshStandardMaterial color="#f2eee8" roughness={0.95} />
+    </mesh>
+  );
+}
+
+function Ceiling() {
+  return (
+    <mesh position={[0, 5, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[14, 10]} />
+      <meshStandardMaterial color="#faf9f7" roughness={1} />
+    </mesh>
+  );
+}
+
+function BrandingText() {
+  return (
+    <>
       <Text position={[0, 3.8, -4.44]} fontSize={0.18} color="#5b7a6a" anchorX="center" anchorY="middle">
         INTELLIVIEW
       </Text>
       <Text position={[0, 3.55, -4.44]} fontSize={0.06} color="#a0b0a5" anchorX="center" anchorY="middle">
         Where Great Careers Begin
       </Text>
+    </>
+  );
+}
+
+function Room() {
+  return (
+    <group>
+      <Floor />
+      <BackWall />
+      <LeftWall />
+      <RightWall />
+      <Ceiling />
+      <BrandingText />
     </group>
   );
 }
@@ -267,16 +336,18 @@ function Room() {
 function ConferenceTable() {
   return (
     <group>
-      <RoundedBox args={[4.2, 0.07, 1.8]} radius={0.035} position={[0, 0.75, 0]} castShadow receiveShadow>
+      {/* Oval table top */}
+      <mesh position={[0, 0.75, 0]} scale={[1, 1, 0.43]} castShadow receiveShadow>
+        <cylinderGeometry args={[2.1, 2.1, 0.07, 64]} />
         <meshStandardMaterial color="#7a5c38" roughness={0.35} />
-      </RoundedBox>
+      </mesh>
 
       {(
         [
-          [-1.7, 0.375, -0.65],
-          [1.7, 0.375, -0.65],
-          [-1.7, 0.375, 0.65],
-          [1.7, 0.375, 0.65],
+          [-1.4, 0.375, -0.5],
+          [1.4, 0.375, -0.5],
+          [-1.4, 0.375, 0.5],
+          [1.4, 0.375, 0.5],
         ] as [number, number, number][]
       ).map((pos, i) => (
         <mesh key={i} position={pos} castShadow>
@@ -320,12 +391,14 @@ function ConferenceTable() {
 function Chair({
   position,
   rotation = [0, 0, 0],
+  scale = 1,
 }: {
   position: [number, number, number];
   rotation?: [number, number, number];
+  scale?: number;
 }) {
   return (
-    <group position={position} rotation={rotation}>
+    <group position={position} rotation={rotation} scale={scale}>
       <RoundedBox args={[0.42, 0.05, 0.42]} radius={0.02} position={[0, 0.45, 0]}>
         <meshStandardMaterial color="#3a3a3a" roughness={0.85} />
       </RoundedBox>
@@ -415,7 +488,7 @@ export default function ConferenceScene({
           toneMappingExposure: 1.5,
         }}
       >
-        <color attach="background" args={["#eae4d8"]} />
+        <color attach="background" args={["#4A90B8"]} />
         <CameraRig />
         <Lighting />
         <Environment preset="apartment" background={false} environmentIntensity={0.5} />
@@ -432,17 +505,17 @@ export default function ConferenceScene({
           color="#8a7a6a"
         />
 
-        <Chair position={[-1.6, 0, -0.85]} rotation={[0, 0, 0]} />
-        <Chair position={[0, 0, -0.85]} rotation={[0, 0, 0]} />
-        <Chair position={[1.6, 0, -0.85]} rotation={[0, 0, 0]} />
-        <Chair position={[0, 0, 1.15]} rotation={[0, Math.PI, 0]} />
+        <Chair position={[-1.6, 0, -1.1]} rotation={[0, 0, 0]} scale={1.25} />
+        <Chair position={[0, 0, -1.1]} rotation={[0, 0, 0]} scale={1.25} />
+        <Chair position={[1.6, 0, -1.1]} rotation={[0, 0, 0]} scale={1.25} />
+        <Chair position={[0, 0, 1.3]} rotation={[0, Math.PI, 0]} />
 
         {/* Interviewers */}
         {interviewers.map((p) => {
           // Rotate interviewers to face the candidate
           const rotation = p.seatX === -1.6 ? 0.3 : p.seatX === 1.6 ? -0.3 : 0;
           return (
-            <group key={p.id} position={[p.seatX, 0, -1.0]} rotation={[0, rotation, 0]}>
+            <group key={p.id} position={[p.seatX, -0.15, -1.15]} rotation={[0, rotation, 0]}>
               <Character
                 position={[0, 0, 0]}
                 skinTone={p.skinTone}
@@ -456,7 +529,7 @@ export default function ConferenceScene({
         })}
 
         {/* Candidate */}
-        <group position={[0, -0.25, 1.18]} rotation={[0, Math.PI, 0]}>
+        <group position={[0, -0.25, 1.35]} rotation={[0, Math.PI, 0]}>
           <Character
             position={[0, 0, 0]}
             skinTone="#f4c4a0"

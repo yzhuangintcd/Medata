@@ -91,12 +91,12 @@ export default function InterviewDashboard() {
   }
 
   return (
-    <div className="relative flex flex-col min-h-[calc(100vh-7rem)] bg-[#f5f0e8] overflow-hidden">
+    <div className="relative flex flex-col min-h-[calc(100vh-7rem)] bg-gradient-to-b from-[#87CEEB] via-[#B0D9F1] to-[#E0F2FF] overflow-hidden">
       {/* 3D Canvas */}
       <div className="absolute inset-0 z-0">
         <Suspense
           fallback={
-            <div className="w-full h-full flex items-center justify-center bg-[#f5f0e8]">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-[#87CEEB] via-[#B0D9F1] to-[#E0F2FF]">
               <div className="flex flex-col items-center gap-3">
                 <div className="h-10 w-10 rounded-full border-2 border-[#8a7a5a] border-t-transparent animate-spin" />
                 <span className="text-sm text-[#6b5a3a] font-medium">
@@ -122,26 +122,22 @@ export default function InterviewDashboard() {
           <h1 className="text-2xl font-bold tracking-tight text-[#2a3a2a] drop-shadow-sm">
             Welcome to Your Interview 👋
           </h1>
-          <p className="mt-1.5 max-w-md mx-auto text-[#6b6a5a] leading-relaxed text-xs">
-            Your interviewers are ready to meet you. Click on any panel member
-            to begin that stage. Take your time — we&apos;re rooting for you.
-          </p>
         </section>
 
         {/* Step indicators */}
-        <section className="flex items-center gap-2 mt-1 pointer-events-auto">
+        <section className="flex items-center gap-3 mt-2 pointer-events-auto">
           {interviewers.map((p) => (
             <button
               key={p.id}
               onClick={() => handleSelect(p.id)}
               onMouseEnter={() => setHoveredId(p.id)}
               onMouseLeave={() => setHoveredId(null)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${hoveredId === p.id
-                ? "bg-white shadow-md border-[#c0b898] text-[#2a3a2a]"
-                : "bg-white/60 border-[#d8d0c0] text-[#6b6a5a] hover:bg-white/80"
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-sm font-medium transition-all border ${hoveredId === p.id
+                ? "bg-white shadow-lg border-[#c0b898] text-[#2a3a2a] scale-105"
+                : "bg-white/70 border-[#d8d0c0] text-[#6b6a5a] hover:bg-white/90 hover:shadow-md"
                 }`}
             >
-              <span className="flex items-center justify-center h-5 w-5 rounded-full bg-[#f0ebe3] text-[10px] font-bold text-[#6b5a3a] border border-[#d8d0c0]">
+              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#f0ebe3] text-[11px] font-bold text-[#6b5a3a] border border-[#d8d0c0]">
                 {p.step}
               </span>
               <span>{p.title}</span>
