@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Candidate {
   id: string;
@@ -22,6 +22,26 @@ interface CultureValue {
   id: string;
   value: string;
   description: string;
+}
+
+interface ChatMessage {
+  role: "ai" | "candidate";
+  text: string;
+}
+
+interface ResponseData {
+  id: string;
+  candidateEmail: string;
+  candidateId: string;
+  interviewType: string;
+  taskId: number;
+  taskTitle: string;
+  response?: string;
+  chatHistory?: ChatMessage[];
+  timeSpentSeconds: number;
+  metadata: any;
+  createdAt: string;
+  submittedAt: string;
 }
 
 export default function CompanyDashboard() {
@@ -61,6 +81,12 @@ export default function CompanyDashboard() {
     },
   ]);
 
+  // Response viewing state
+  const [responses, setResponses] = useState<ResponseData[]>([]);
+  const [loadingResponses, setLoadingResponses] = useState(false);
+  const [responseError, setResponseError] = useState("");
+  const [expandedResponseId, setExpandedResponseId] = useState<string | null>(null);
+
   const [newQuality, setNewQuality] = useState('');
   const [newQualityImportance, setNewQualityImportance] =
     useState<'critical' | 'important' | 'nice-to-have'>('important');
@@ -70,6 +96,36 @@ export default function CompanyDashboard() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+
+  // Fetch responses when selected candidate changes
+  useEffect(() => {
+    if (selectedCandidate?.email) {
+      fetchResponses();
+    }
+  }, [selectedCandidate?.email]);
+
+  async function fetchResponses() {
+    setLoadingResponses(true);
+    setResponseError("");
+    try {
+      const res = await fetch("/api/get-responses");
+      const data = await res.json();
+      
+      if (data.success) {
+        // Filter responses for selected candidate
+        const candidateResponses = selectedCandidate 
+          ? data.responses.filter((r: ResponseData) => r.candidateEmail === selectedCandidate.email)
+          : data.responses;
+        setResponses(candidateResponses);
+      } else {
+        setResponseError(data.message || "Failed to fetch responses");
+      }
+    } catch (err) {
+      setResponseError("Network error: " + (err instanceof Error ? err.message : "Unknown"));
+    } finally {
+      setLoadingResponses(false);
+    }
+  }
 
   const sendInterviewEmail = async () => {
     if (!selectedCandidate) return;
@@ -234,6 +290,19 @@ export default function CompanyDashboard() {
                   >
                     {isLoading ? 'Sending...' : emailSent ? '✓ Email Sent!' : 'Send Interview Link to Candidate'}
                   </button>
+
+                  {/* Responses Summary */}
+                  <div className="border-t border-slate-200 pt-4 mt-4">
+                    <p className="text-sm font-medium text-slate-700 mb-2">
+                      Interview Responses:
+                    </p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {responses.length}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {responses.filter(r => r.metadata?.completed).length} completed
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <p className="text-slate-500">No candidate selected</p>
@@ -382,6 +451,138 @@ export default function CompanyDashboard() {
                   Add Culture Value
                 </button>
               </div>
+            </div>
+
+            {/* Interview Responses */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Interview Responses
+                </h2>
+                <button
+                  onClick={fetchResponses}
+                  className="px-3 py-1 text-sm bg-slate-200 hover:bg-slate-300 rounded-lg transition"
+                >
+                  🔄 Refresh
+                </button>
+              </div>
+
+              {loadingResponses && (
+                <div className="text-center py-8">
+                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-3 border-solid border-blue-600 border-r-transparent"></div>
+                  <p className="mt-2 text-slate-400 text-sm">Loading responses...</p>
+                </div>
+              )}
+
+              {responseError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-700 text-sm">❌ {responseError}</p>
+                </div>
+              )}
+
+              {!loadingResponses && !responseError && responses.length === 0 && (
+                <div className="text-center py-8 bg-slate-50 rounded-lg">
+                  <p className="text-slate-500">No responses yet</p>
+                  <p className="text-slate-400 text-sm mt-1">
+                    Responses will appear here once the candidate completes an interview
+                  </p>
+                </div>
+              )}
+
+              {!loadingResponses && !responseError && responses.length > 0 && (
+                <div className="space-y-3">
+                  {responses.map((response) => (
+                    <div
+                      key={response.id}
+                      className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition cursor-pointer"
+                      onClick={() => setExpandedResponseId(
+                        expandedResponseId === response.id ? null : response.id
+                      )}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-slate-900">
+                            {response.taskTitle}
+                          </h4>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                              {response.interviewType}
+                            </span>
+                            <span className="text-xs text-slate-500">
+                              {new Date(response.createdAt).toLocaleDateString()}
+                            </span>
+                            {response.metadata?.completed && (
+                              <span className="text-xs font-medium text-green-600">✓ Complete</span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-slate-400">
+                          {expandedResponseId === response.id ? '▼' : '▶'}
+                        </span>
+                      </div>
+
+                      {expandedResponseId === response.id && (
+                        <div className="mt-4 pt-4 border-t border-slate-200 space-y-3">
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            {response.timeSpentSeconds !== undefined && (
+                              <div>
+                                <span className="text-slate-600">Time Spent:</span>
+                                <p className="font-medium">
+                                  {Math.floor(response.timeSpentSeconds / 60)}m {response.timeSpentSeconds % 60}s
+                                </p>
+                              </div>
+                            )}
+                            {response.metadata?.difficulty && (
+                              <div>
+                                <span className="text-slate-600">Difficulty:</span>
+                                <p className="font-medium capitalize">{response.metadata.difficulty}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Technical Response */}
+                          {response.response && (response.interviewType === 'technical1' || response.interviewType === 'technical2') && (
+                            <div className="mt-3">
+                              <p className="text-xs font-medium text-slate-600 mb-2">Submission:</p>
+                              <pre className="bg-slate-50 rounded p-3 text-xs overflow-x-auto max-h-48 font-mono text-slate-800 whitespace-pre-wrap break-words">
+                                {response.response}
+                              </pre>
+                            </div>
+                          )}
+
+                          {/* Chat History */}
+                          {response.chatHistory && response.chatHistory.length > 0 && (
+                            <div className="mt-3">
+                              <p className="text-xs font-medium text-slate-600 mb-2">
+                                Conversation ({response.chatHistory.filter(m => m.role === "candidate").length} responses)
+                              </p>
+                              <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {response.chatHistory.map((msg, idx) => (
+                                  <div
+                                    key={idx}
+                                    className={`text-xs p-2 rounded ${
+                                      msg.role === "candidate"
+                                        ? "bg-blue-50 border border-blue-100 text-blue-900"
+                                        : "bg-slate-100 border border-slate-200 text-slate-900"
+                                    }`}
+                                  >
+                                    <p className="font-medium mb-1">
+                                      {msg.role === "candidate" ? "👤 Candidate" : "🤖 AI"}
+                                    </p>
+                                    <p className="whitespace-pre-wrap text-slate-700">
+                                      {msg.text.length > 200 ? msg.text.substring(0, 200) + "..." : msg.text}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
