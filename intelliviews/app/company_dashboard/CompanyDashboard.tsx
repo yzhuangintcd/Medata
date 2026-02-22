@@ -97,6 +97,19 @@ export default function CompanyDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
+  // Recommendation state
+  const [showRecommendation, setShowRecommendation] = useState(false);
+  const [recommendation, setRecommendation] = useState<{
+    decision: 'hire' | 'reject' | 'review';
+    reasoning: string;
+    strengths: string[];
+    concerns: string[];
+    emailSubject?: string;
+    emailBody?: string;
+  } | null>(null);
+  const [analyzingCandidate, setAnalyzingCandidate] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   // Fetch responses when selected candidate changes
   useEffect(() => {
     if (selectedCandidate?.email) {
@@ -205,6 +218,74 @@ export default function CompanyDashboard() {
         return 'bg-green-100 text-green-800 border-green-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
+  const analyzeAndRecommend = async () => {
+    if (!selectedCandidate) return;
+
+    setAnalyzingCandidate(true);
+    setShowRecommendation(false);
+    try {
+      const response = await fetch('/api/recommend-candidate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          candidateEmail: selectedCandidate.email,
+          jobRequirements,
+          cultureValues,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setRecommendation(data.recommendation);
+        setShowRecommendation(true);
+      } else {
+        alert('Failed to generate recommendation: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error analyzing candidate:', error);
+      alert('Failed to analyze candidate');
+    } finally {
+      setAnalyzingCandidate(false);
+    }
+  };
+
+  const sendDecisionEmail = async () => {
+    if (!selectedCandidate || !recommendation) return;
+
+    setSendingEmail(true);
+    try {
+      const response = await fetch('/api/send-decision-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          candidateEmail: selectedCandidate.email,
+          candidateName: selectedCandidate.name,
+          subject: recommendation.emailSubject,
+          body: recommendation.emailBody,
+          decision: recommendation.decision,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('✅ Email sent successfully!');
+      } else {
+        alert('Failed to send email: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert('Failed to send email');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -490,97 +571,301 @@ export default function CompanyDashboard() {
               )}
 
               {!loadingResponses && !responseError && responses.length > 0 && (
-                <div className="space-y-3">
-                  {responses.map((response) => (
-                    <div
-                      key={response.id}
-                      className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition cursor-pointer"
-                      onClick={() => setExpandedResponseId(
-                        expandedResponseId === response.id ? null : response.id
-                      )}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-slate-900">
-                            {response.taskTitle}
-                          </h4>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                              {response.interviewType}
-                            </span>
-                            <span className="text-xs text-slate-500">
-                              {new Date(response.createdAt).toLocaleDateString()}
-                            </span>
-                            {response.metadata?.completed && (
-                              <span className="text-xs font-medium text-green-600">✓ Complete</span>
-                            )}
-                          </div>
-                        </div>
-                        <span className="text-slate-400">
-                          {expandedResponseId === response.id ? '▼' : '▶'}
-                        </span>
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  {/* Overview Header */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-200 p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-slate-900 text-lg">
+                          Complete Interview Submission
+                        </h3>
+                        <p className="text-sm text-slate-600 mt-1">
+                          {responses.length} response{responses.length > 1 ? 's' : ''} • 
+                          Total time: {Math.floor(responses.reduce((sum, r) => sum + (r.timeSpentSeconds || 0), 0) / 60)} minutes
+                        </p>
                       </div>
-
-                      {expandedResponseId === response.id && (
-                        <div className="mt-4 pt-4 border-t border-slate-200 space-y-3">
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            {response.timeSpentSeconds !== undefined && (
-                              <div>
-                                <span className="text-slate-600">Time Spent:</span>
-                                <p className="font-medium">
-                                  {Math.floor(response.timeSpentSeconds / 60)}m {response.timeSpentSeconds % 60}s
-                                </p>
-                              </div>
-                            )}
-                            {response.metadata?.difficulty && (
-                              <div>
-                                <span className="text-slate-600">Difficulty:</span>
-                                <p className="font-medium capitalize">{response.metadata.difficulty}</p>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Technical Response */}
-                          {response.response && (response.interviewType === 'technical1' || response.interviewType === 'technical2') && (
-                            <div className="mt-3">
-                              <p className="text-xs font-medium text-slate-600 mb-2">Submission:</p>
-                              <pre className="bg-slate-50 rounded p-3 text-xs overflow-x-auto max-h-48 font-mono text-slate-800 whitespace-pre-wrap break-words">
-                                {response.response}
-                              </pre>
-                            </div>
-                          )}
-
-                          {/* Chat History */}
-                          {response.chatHistory && response.chatHistory.length > 0 && (
-                            <div className="mt-3">
-                              <p className="text-xs font-medium text-slate-600 mb-2">
-                                Conversation ({response.chatHistory.filter(m => m.role === "candidate").length} responses)
-                              </p>
-                              <div className="space-y-2 max-h-48 overflow-y-auto">
-                                {response.chatHistory.map((msg, idx) => (
-                                  <div
-                                    key={idx}
-                                    className={`text-xs p-2 rounded ${
-                                      msg.role === "candidate"
-                                        ? "bg-blue-50 border border-blue-100 text-blue-900"
-                                        : "bg-slate-100 border border-slate-200 text-slate-900"
-                                    }`}
-                                  >
-                                    <p className="font-medium mb-1">
-                                      {msg.role === "candidate" ? "👤 Candidate" : "🤖 AI"}
-                                    </p>
-                                    <p className="whitespace-pre-wrap text-slate-700">
-                                      {msg.text.length > 200 ? msg.text.substring(0, 200) + "..." : msg.text}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <div className="text-right">
+                        <span className="text-xs text-slate-500">Submitted on</span>
+                        <p className="text-sm font-medium text-slate-700">
+                          {new Date(responses[0].createdAt).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}
+                        </p>
+                      </div>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Grouped Responses */}
+                  <div className="divide-y divide-slate-200">
+                    {/* Technical 1 Section */}
+                    {responses.filter(r => r.interviewType === 'technical1').length > 0 && (
+                      <div className="p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-lg">💻</span>
+                          <h4 className="font-semibold text-slate-900">Technical Assessment 1 - Coding</h4>
+                          <span className="ml-auto px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">
+                            {responses.filter(r => r.interviewType === 'technical1' && r.metadata?.completed).length} completed
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {responses.filter(r => r.interviewType === 'technical1').map((response) => (
+                            <div key={response.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1">
+                                  <p className="font-medium text-slate-900 text-sm">{response.taskTitle}</p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {response.metadata?.difficulty && (
+                                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                        response.metadata.difficulty === 'Hard' 
+                                          ? 'bg-red-100 text-red-700' 
+                                          : 'bg-amber-100 text-amber-700'
+                                      }`}>
+                                        {response.metadata.difficulty}
+                                      </span>
+                                    )}
+                                    <span className="text-xs text-slate-500">
+                                      ⏱ {Math.floor(response.timeSpentSeconds / 60)}m {response.timeSpentSeconds % 60}s
+                                    </span>
+                                  </div>
+                                </div>
+                                {response.metadata?.completed && (
+                                  <span className="text-emerald-600 text-sm">✓</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Technical 2 Section */}
+                    {responses.filter(r => r.interviewType === 'technical2').length > 0 && (
+                      <div className="p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-lg">🏢</span>
+                          <h4 className="font-semibold text-slate-900">Technical Assessment 2 - Scenarios</h4>
+                          <span className="ml-auto px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">
+                            {responses.filter(r => r.interviewType === 'technical2' && r.metadata?.completed).length} completed
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {responses.filter(r => r.interviewType === 'technical2').map((response) => (
+                            <div key={response.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1">
+                                  <p className="font-medium text-slate-900 text-sm">{response.taskTitle}</p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {response.metadata?.difficulty && (
+                                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                        response.metadata.difficulty === 'Hard' 
+                                          ? 'bg-red-100 text-red-700' 
+                                          : 'bg-amber-100 text-amber-700'
+                                      }`}>
+                                        {response.metadata.difficulty}
+                                      </span>
+                                    )}
+                                    <span className="text-xs text-slate-500">
+                                      ⏱ {Math.floor(response.timeSpentSeconds / 60)}m {response.timeSpentSeconds % 60}s
+                                    </span>
+                                  </div>
+                                </div>
+                                {response.metadata?.completed && (
+                                  <span className="text-emerald-600 text-sm">✓</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Behavioural Section */}
+                    {responses.filter(r => r.interviewType === 'behavioural').length > 0 && (
+                      <div className="p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-lg">🧠</span>
+                          <h4 className="font-semibold text-slate-900">Behavioral Assessment</h4>
+                          <span className="ml-auto px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">
+                            {responses.filter(r => r.interviewType === 'behavioural' && r.metadata?.completed).length} completed
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {responses.filter(r => r.interviewType === 'behavioural').map((response) => (
+                            <div key={response.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1">
+                                  <p className="font-medium text-slate-900 text-sm">{response.taskTitle}</p>
+                                  {response.metadata?.question && (
+                                    <p className="text-xs text-slate-600 mt-1 italic">
+                                      Q: {response.metadata.question}
+                                    </p>
+                                  )}
+                                </div>
+                                {response.metadata?.completed && (
+                                  <span className="text-emerald-600 text-sm">✓</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Analyze And Recommend Button */}
+                  <div className="p-4 bg-slate-50 border-t border-slate-200">
+                    <button 
+                      onClick={analyzeAndRecommend}
+                      disabled={analyzingCandidate}
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {analyzingCandidate ? (
+                        <>
+                          <div className="inline-block h-5 w-5 animate-spin rounded-full border-3 border-solid border-white border-r-transparent"></div>
+                          <span>Analyzing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-lg">🤖</span>
+                          <span>Analyze And Recommend</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Recommendation Results */}
+                  {showRecommendation && recommendation && (
+                    <div className="p-4 bg-white border-t border-slate-200">
+                      <div className={`rounded-lg border-2 p-5 ${
+                        recommendation.decision === 'hire' 
+                          ? 'bg-emerald-50 border-emerald-300'
+                          : recommendation.decision === 'reject'
+                          ? 'bg-red-50 border-red-300'
+                          : 'bg-amber-50 border-amber-300'
+                      }`}>
+                        {/* Decision Header */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <span className="text-3xl">
+                              {recommendation.decision === 'hire' ? '✅' : 
+                               recommendation.decision === 'reject' ? '❌' : '⚠️'}
+                            </span>
+                            <div>
+                              <h3 className="text-xl font-bold text-slate-900 capitalize">
+                                Recommendation: {recommendation.decision}
+                              </h3>
+                              {(recommendation as any).overallScore && (
+                                <p className="text-sm text-slate-600 mt-1">
+                                  Overall Score: {(recommendation as any).overallScore}/10 • 
+                                  Technical: {(recommendation as any).technicalScore}/10 • 
+                                  Behavioral: {(recommendation as any).behavioralScore}/10
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Reasoning */}
+                        <div className="mb-4">
+                          <h4 className="font-semibold text-slate-900 mb-2">Reasoning</h4>
+                          <p className="text-slate-700 leading-relaxed">{recommendation.reasoning}</p>
+                        </div>
+
+                        {/* Strengths */}
+                        {recommendation.strengths && recommendation.strengths.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                              <span>💪</span> Strengths
+                            </h4>
+                            <ul className="space-y-1">
+                              {recommendation.strengths.map((strength, idx) => (
+                                <li key={idx} className="text-slate-700 text-sm flex items-start gap-2">
+                                  <span className="text-emerald-600 mt-0.5">•</span>
+                                  <span>{strength}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Concerns */}
+                        {recommendation.concerns && recommendation.concerns.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                              <span>⚠️</span> Concerns
+                            </h4>
+                            <ul className="space-y-1">
+                              {recommendation.concerns.map((concern, idx) => (
+                                <li key={idx} className="text-slate-700 text-sm flex items-start gap-2">
+                                  <span className="text-amber-600 mt-0.5">•</span>
+                                  <span>{concern}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Email Preview */}
+                        {recommendation.emailSubject && recommendation.emailBody && (
+                          <div className="mt-5 pt-5 border-t border-slate-300">
+                            <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                              <span>📧</span> Suggested Email
+                            </h4>
+                            <div className="bg-white rounded-lg p-4 border border-slate-200 mb-4">
+                              <div className="mb-3">
+                                <p className="text-xs text-slate-500 mb-1">Subject:</p>
+                                <p className="font-medium text-slate-900">{recommendation.emailSubject}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-slate-500 mb-1">Body:</p>
+                                <div className="text-sm text-slate-700 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                                  {recommendation.emailBody}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Email Actions */}
+                            <div className="flex gap-3">
+                              <button
+                                onClick={sendDecisionEmail}
+                                disabled={sendingEmail}
+                                className={`flex-1 font-semibold py-2.5 px-4 rounded-lg transition flex items-center justify-center gap-2 ${
+                                  recommendation.decision === 'hire'
+                                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                    : recommendation.decision === 'reject'
+                                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                                    : 'bg-amber-600 hover:bg-amber-700 text-white'
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              >
+                                {sendingEmail ? (
+                                  <>
+                                    <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                                    <span>Sending...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>📨</span>
+                                    <span>Send Email</span>
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => setShowRecommendation(false)}
+                                className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-lg transition"
+                              >
+                                Close
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
