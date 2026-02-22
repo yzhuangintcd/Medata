@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Email content
-    const baseUrl = process.env.APP_URL || 'http://localhost:3000';
+    const baseUrl = "https://intelliview-itfzztdoz-yzhuangintcds-projects.vercel.app";
     const interviewLink = `${baseUrl}/interview_environment?email=${encodeURIComponent(candidateEmail)}`;
     const emailHtml = `
       <html>
