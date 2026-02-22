@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 /* ─── Scenario data ─── */
 const scenarios = [
@@ -13,9 +13,13 @@ const scenarios = [
     },
 ];
 
+interface Message {
+    role: 'user' | 'assistant';
+    content: string;
+}
+
 interface ScenarioProgress {
-    question: string;
-    userResponse: string;
+    messages: Message[];
     completed: boolean;
 }
 
@@ -28,24 +32,46 @@ interface CultureValue {
 export default function BehaviouralPage() {
     const [activeScenario, setActiveScenario] = useState(0);
     const [scenarioProgress, setScenarioProgress] = useState<Record<number, ScenarioProgress>>({});
-    const [isLoadingQuestion, setIsLoadingQuestion] = useState(false);
+    const [isLoadingMessage, setIsLoadingMessage] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [candidateEmail, setCandidateEmail] = useState('candidate@example.com');
     const [cultureValues, setCultureValues] = useState<CultureValue[]>([]);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scenario = scenarios[activeScenario];
     const progress = scenarioProgress[scenario.id];
     const role = "Senior Software Engineer";
+
+    // Auto-scroll to bottom when messages change
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [progress?.messages]);
 
     // Load progress from localStorage on mount
     useEffect(() => {
         const savedProgress = localStorage.getItem('behavioural_progress');
         if (savedProgress) {
             try {
-                setScenarioProgress(JSON.parse(savedProgress));
+                const parsed = JSON.parse(savedProgress);
+                // Validate that the data has the new format (messages array)
+                let isValidFormat = true;
+                for (const key in parsed) {
+                    if (!parsed[key].messages || !Array.isArray(parsed[key].messages)) {
+                        isValidFormat = false;
+                        break;
+                    }
+                }
+                if (isValidFormat) {
+                    setScenarioProgress(parsed);
+                } else {
+                    // Clear old format data
+                    console.log('Clearing old format behavioral progress');
+                    localStorage.removeItem('behavioural_progress');
+                }
             } catch (e) {
                 console.error('Failed to parse saved progress', e);
+                localStorage.removeItem('behavioural_progress');
             }
         }
         
@@ -68,7 +94,6 @@ export default function BehaviouralPage() {
                 setCultureValues(values);
             } catch (e) {
                 console.error('Failed to parse culture values', e);
-                // Fallback to default values
                 setCultureValues([
                     { id: '1', value: 'Communication', description: 'Effective sharing of ideas' },
                     { id: '2', value: 'Empathy', description: 'Understanding others perspectives' },
@@ -78,7 +103,6 @@ export default function BehaviouralPage() {
                 ]);
             }
         } else {
-            // Default values if none are set
             setCultureValues([
                 { id: '1', value: 'Communication', description: 'Effective sharing of ideas' },
                 { id: '2', value: 'Empathy', description: 'Understanding others perspectives' },
@@ -89,12 +113,10 @@ export default function BehaviouralPage() {
         }
     }, []);
 
-    // Load question for scenario if not already loaded
+    // Start conversation if no progress exists
     useEffect(() => {
-        if (!progress && !isLoadingQuestion) {
-            loadQuestion();
-        } else if (progress && !progress.completed) {
-            setInputValue(progress.userResponse || "");
+        if (!progress && !isLoadingMessage) {
+            startConversation();
         }
     }, [activeScenario]);
 
@@ -105,8 +127,8 @@ export default function BehaviouralPage() {
         }
     }, [scenarioProgress]);
 
-    async function loadQuestion() {
-        setIsLoadingQuestion(true);
+    async function startConversation() {
+        setIsLoadingMessage(true);
         try {
             const apiResponse = await fetch("/api/behavioral-ai", {
                 method: "POST",
@@ -114,6 +136,7 @@ export default function BehaviouralPage() {
                 body: JSON.stringify({
                     scenario,
                     role,
+                    conversationHistory: [],
                 }),
             });
 
@@ -127,58 +150,112 @@ export default function BehaviouralPage() {
                 throw new Error("No response from AI");
             }
 
-            // Save the question to progress
+            // Initialize conversation with AI's first message
             setScenarioProgress(prev => ({
                 ...prev,
                 [scenario.id]: {
-                    question: data.response,
-                    userResponse: "",
+                    messages: [{ role: 'assistant', content: data.response }],
                     completed: false,
                 }
             }));
         } catch (error) {
-            console.error("❌ Error loading question:", error);
-            // Provide a fallback question
+            console.error("❌ Error starting conversation:", error);
+            // Provide a fallback message
             setScenarioProgress(prev => ({
                 ...prev,
                 [scenario.id]: {
-                    question: "How would you handle this situation? Walk me through your thinking.",
-                    userResponse: "",
+                    messages: [{ 
+                        role: 'assistant', 
+                        content: "How would you handle this situation? Walk me through your thinking step by step." 
+                    }],
                     completed: false,
                 }
             }));
         } finally {
-            setIsLoadingQuestion(false);
+            setIsLoadingMessage(false);
         }
     }
 
-    function handleInputChange(value: string) {
-        setInputValue(value);
-        // Auto-save the response as they type
-        if (progress) {
+    async function sendMessage() {
+        if (!inputValue.trim() || isLoadingMessage || !progress || progress.completed) return;
+
+        const userMessage = inputValue.trim();
+        setInputValue("");
+
+        // Add user message to conversation
+        const updatedMessages = [...progress.messages, { role: 'user' as const, content: userMessage }];
+        
+        setScenarioProgress(prev => ({
+            ...prev,
+            [scenario.id]: {
+                ...prev[scenario.id],
+                messages: updatedMessages,
+            }
+        }));
+
+        // Get AI response
+        setIsLoadingMessage(true);
+        try {
+            const apiResponse = await fetch("/api/behavioral-ai", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    scenario,
+                    role,
+                    conversationHistory: updatedMessages,
+                }),
+            });
+
+            if (!apiResponse.ok) {
+                throw new Error(`API error: ${apiResponse.status}`);
+            }
+
+            const data = await apiResponse.json();
+            
+            if (!data.response) {
+                throw new Error("No response from AI");
+            }
+
+            // Add AI response to conversation
             setScenarioProgress(prev => ({
                 ...prev,
                 [scenario.id]: {
                     ...prev[scenario.id],
-                    userResponse: value,
+                    messages: [...updatedMessages, { role: 'assistant', content: data.response }],
                 }
             }));
+        } catch (error) {
+            console.error("❌ Error getting AI response:", error);
+            // Show error message in chat
+            setScenarioProgress(prev => ({
+                ...prev,
+                [scenario.id]: {
+                    ...prev[scenario.id],
+                    messages: [...updatedMessages, { 
+                        role: 'assistant', 
+                        content: "I apologize, I'm having trouble responding right now. Please continue with your thoughts." 
+                    }],
+                }
+            }));
+        } finally {
+            setIsLoadingMessage(false);
         }
     }
 
-    async function handleSubmit() {
-        if (!inputValue.trim() || isSubmitting || !progress) return;
+    async function completeInterview() {
+        if (!progress || progress.completed || isSubmitting) return;
 
-        // Check if already completed - prevent duplicate submissions
-        if (progress.completed) {
-            alert('This scenario has already been submitted.');
+        // Need at least one user message to complete
+        const hasUserMessage = progress.messages.some(m => m.role === 'user');
+        if (!hasUserMessage) {
+            alert('Please respond to at least one question before completing the interview.');
             return;
         }
 
         setIsSubmitting(true);
         
         try {
-            // Save to database
+            // Save entire conversation to database
             await fetch('/api/save-response', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -188,17 +265,17 @@ export default function BehaviouralPage() {
                     interviewType: 'behavioural',
                     taskId: scenario.id,
                     taskTitle: scenario.title,
-                    response: inputValue,
+                    response: JSON.stringify(progress.messages), // Store entire conversation
                     timeSpentSeconds: 0,
                     metadata: {
-                        question: progress.question,
                         scenario: scenario.situation,
+                        conversationLength: progress.messages.length,
                         completed: true,
                     },
                 }),
             });
             
-            console.log('✅ Behavioural response saved to database');
+            console.log('✅ Behavioural conversation saved to database');
             
             // Mark as completed
             setScenarioProgress(prev => ({
@@ -210,17 +287,23 @@ export default function BehaviouralPage() {
             }));
         } catch (error) {
             console.error('❌ Failed to save to database:', error);
-            alert('Failed to submit response. Please try again.');
+            alert('Failed to complete interview. Please try again.');
         } finally {
             setIsSubmitting(false);
+        }
+    }
+
+    function handleKeyPress(e: React.KeyboardEvent<HTMLInputElement>) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
         }
     }
 
     function handleScenarioSwitch(idx: number) {
         const newScenario = scenarios[idx];
         setActiveScenario(idx);
-        const newProgress = scenarioProgress[newScenario.id];
-        setInputValue(newProgress?.userResponse || "");
+        setInputValue("");
     }
 
     return (
@@ -288,7 +371,7 @@ export default function BehaviouralPage() {
                 </div>
             </div>
 
-            {/* ─── Right Panel: Response interface ─── */}
+            {/* ─── Right Panel: Chat Interface ─── */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
                 <div className="flex items-center gap-3 border-b border-zinc-800 bg-zinc-900 px-5 py-3">
@@ -306,54 +389,99 @@ export default function BehaviouralPage() {
                     )}
                 </div>
 
-                {/* Question display */}
-                {isLoadingQuestion ? (
+                {/* Chat Messages */}
+                {isLoadingMessage && !progress ? (
                     <div className="flex-1 flex items-center justify-center">
                         <div className="text-center">
                             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent mb-4"></div>
-                            <p className="text-zinc-400">Loading interview question...</p>
+                            <p className="text-zinc-400">Starting conversation...</p>
                         </div>
                     </div>
                 ) : progress ? (
-                    <div className="flex-1 flex flex-col">
-                        {/* Question */}
-                        <div className="bg-zinc-800/50 border-l-4 border-indigo-500 p-5 m-5">
-                            <p className="text-xs font-semibold text-indigo-400 mb-2">INTERVIEW QUESTION</p>
-                            <p className="text-sm text-zinc-200 leading-relaxed">{progress.question}</p>
-                        </div>
-
-                        {/* Response area */}
-                        <div className="flex-1 p-5 pt-0">
-                            <label className="text-xs font-semibold text-zinc-400 mb-2 block">YOUR RESPONSE</label>
-                            <textarea
-                                value={inputValue}
-                                onChange={(e) => handleInputChange(e.target.value)}
-                                placeholder="Type your response here... Be specific and use examples from your experience."
-                                disabled={progress.completed || isSubmitting}
-                                className="w-full h-[calc(100%-2rem)] resize-none rounded-lg bg-zinc-800 p-4 text-sm text-zinc-100 placeholder-zinc-500 outline-none ring-1 ring-zinc-700 focus:ring-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            />
-                        </div>
-
-                        {/* Submit button */}
-                        <div className="border-t border-zinc-800 bg-zinc-900 p-4">
-                            <div className="flex gap-3 items-center justify-end">
-                                {progress.completed ? (
-                                    <span className="text-emerald-400 text-sm font-medium">✓ Response submitted</span>
-                                ) : (
-                                    <button
-                                        onClick={handleSubmit}
-                                        disabled={isSubmitting || !inputValue.trim()}
-                                        className="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    <>
+                        {/* Messages container */}
+                        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                            {progress.messages && Array.isArray(progress.messages) && progress.messages.map((message, idx) => (
+                                <div
+                                    key={idx}
+                                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                                >
+                                    <div
+                                        className={`max-w-[80%] rounded-lg p-3.5 ${
+                                            message.role === 'user'
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-zinc-800 text-zinc-100 border border-zinc-700'
+                                        }`}
                                     >
-                                        {isSubmitting ? "Submitting..." : "Submit Response"}
-                                    </button>
-                                )}
-                            </div>
-                            <div className="mt-2 text-[10px] text-zinc-600 text-right">
-                                <p>Tip: Be specific and use real examples from your experience.</p>
-                            </div>
+                                        <p className="text-xs font-semibold mb-1 opacity-70">
+                                            {message.role === 'user' ? 'You' : 'AI Interviewer'}
+                                        </p>
+                                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                                            {message.content}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                            
+                            {/* Loading indicator */}
+                            {isLoadingMessage && (
+                                <div className="flex justify-start">
+                                    <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-3.5">
+                                        <p className="text-xs font-semibold mb-1 opacity-70">AI Interviewer</p>
+                                        <div className="flex gap-1.5">
+                                            <span className="h-2 w-2 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                            <span className="h-2 w-2 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                            <span className="h-2 w-2 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            <div ref={messagesEndRef} />
                         </div>
-                    </div>
+
+                        {/* Input area */}
+                        <div className="border-t border-zinc-800 bg-zinc-900 p-4">
+                            {progress.completed ? (
+                                <div className="text-center py-4">
+                                    <span className="text-emerald-400 text-sm font-medium">✓ Interview completed and saved</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex gap-3 items-end">
+                                        <div className="flex-1">
+                                            <input
+                                                type="text"
+                                                value={inputValue}
+                                                onChange={(e) => setInputValue(e.target.value)}
+                                                onKeyPress={handleKeyPress}
+                                                placeholder="Type your response... (Press Enter to send)"
+                                                disabled={isLoadingMessage}
+                                                className="w-full rounded-lg bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none ring-1 ring-zinc-700 focus:ring-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={sendMessage}
+                                            disabled={isLoadingMessage || !inputValue.trim()}
+                                            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Send
+                                        </button>
+                                        <button
+                                            onClick={completeInterview}
+                                            disabled={isSubmitting || isLoadingMessage}
+                                            className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {isSubmitting ? 'Completing...' : 'Complete Interview'}
+                                        </button>
+                                    </div>
+                                    <p className="mt-2 text-[10px] text-zinc-600">
+                                        Have a natural conversation. Click "Complete Interview" when you're done to save the conversation.
+                                    </p>
+                                </>
+                            )}
+                        </div>
+                    </>
                 ) : (
                     <div className="flex-1 flex items-center justify-center">
                         <p className="text-zinc-500">Preparing scenario...</p>

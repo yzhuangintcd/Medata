@@ -5,6 +5,11 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 interface RequestBody {
   scenario: {
     id: number;
@@ -12,6 +17,7 @@ interface RequestBody {
     situation: string;
   };
   role: string; // e.g., "Senior Software Engineer", "Full Stack Developer"
+  conversationHistory: Message[]; // Previous messages in the conversation
 }
 
 // Budget tracking (simple in-memory, reset on server restart)
@@ -21,7 +27,7 @@ const BUDGET_TOKENS = 20000; // ~$0.30 with Haiku pricing (10k tokens = ~$0.15)
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as RequestBody;
-    const { scenario, role } = body;
+    const { scenario, role, conversationHistory = [] } = body;
 
     // Check budget
     if (totalTokensUsed > BUDGET_TOKENS * 0.9) {
@@ -31,36 +37,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const systemPrompt = `You are a concise technical interviewer evaluating candidates for a ${role} position. 
-Your job is to ask ONE focused question for each behavioral scenario presented to you.
+    const systemPrompt = `You are a conversational technical interviewer evaluating candidates for a ${role} position.
 
-Guidelines:
-- Keep the question short (1-2 sentences max, about 20-30 words)
-- Ask a specific, probing question that tests their decision-making, communication, or integrity
-- Be direct and professional
-- Do NOT repeat the scenario back to them
-- The question should make them think deeply about their approach
+Scenario Context: "${scenario.title}" - ${scenario.situation}
 
-Scenario: "${scenario.title}" - ${scenario.situation}`;
+Your role:
+- Have a natural conversation with the candidate about this scenario
+- If this is the start (no history), ask an opening question about how they'd handle it
+- If continuing a conversation, respond naturally to their answer with:
+  * Follow-up questions that probe deeper
+  * Requests for specific examples or clarification
+  * Challenges to their reasoning (respectfully)
+  * Acknowledgment of good points before asking what else they'd consider
+- Keep responses concise (2-4 sentences, about 30-50 words)
+- Be direct, professional, and engaging
+- Guide the conversation to explore their decision-making, communication, integrity, and technical judgment
+- Don't just accept surface-level answers - dig deeper
 
-    const userMessage = `Generate ONE focused interview question for this scenario. The question should probe how the candidate would handle this situation, focusing on their decision-making process and values.`;
+Remember: You're conducting a live interview, not writing an essay. Keep it conversational and dynamic.`;
+
+    // Build the messages array for Claude
+    // If no history, start with a request to begin the interview
+    // If history exists, pass it along for context
+    const messages: Array<{ role: 'user' | 'assistant'; content: string }> = 
+      conversationHistory.length === 0
+        ? [
+            {
+              role: 'user',
+              content: 'Begin the behavioral interview by asking your first question about this scenario.',
+            },
+          ]
+        : conversationHistory.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+          }));
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 100,
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 150,
       temperature: 0.8,
       system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: userMessage,
-            },
-          ],
-        },
-      ],
+      messages,
     });
 
     // Extract token usage

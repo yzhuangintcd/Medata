@@ -842,9 +842,9 @@ export default function CompanyDashboard() {
                                 <div className="flex items-start justify-between mb-2">
                                   <div className="flex-1">
                                     <p className="font-medium text-zinc-200 text-sm">{response.taskTitle}</p>
-                                    {response.metadata?.question && (
-                                      <p className="text-xs text-zinc-400 mt-1 italic">
-                                        Q: {response.metadata.question}
+                                    {response.metadata?.conversationLength && (
+                                      <p className="text-xs text-zinc-400 mt-1">
+                                        {response.metadata.conversationLength} messages in conversation
                                       </p>
                                     )}
                                   </div>
@@ -860,9 +860,40 @@ export default function CompanyDashboard() {
                               </button>
                               {expandedResponseId === response.id && response.response && (
                                 <div className="px-3 pb-3 border-t border-zinc-700 pt-3 bg-zinc-950">
-                                  <p className="text-xs text-zinc-500 mb-2 font-medium">CANDIDATE'S RESPONSE:</p>
-                                  <div className="bg-zinc-900 p-3 rounded border border-zinc-700 text-sm text-zinc-200 whitespace-pre-wrap">
-                                    {response.response}
+                                  <p className="text-xs text-zinc-500 mb-2 font-medium">CONVERSATION:</p>
+                                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                                    {(() => {
+                                      try {
+                                        const messages = JSON.parse(response.response);
+                                        if (Array.isArray(messages)) {
+                                          return messages.map((msg: any, idx: number) => (
+                                            <div
+                                              key={idx}
+                                              className={`p-2.5 rounded text-xs ${
+                                                msg.role === 'user'
+                                                  ? 'bg-indigo-900/30 border border-indigo-700/40 ml-8'
+                                                  : 'bg-zinc-800 border border-zinc-700 mr-8'
+                                              }`}
+                                            >
+                                              <p className="font-semibold text-[10px] mb-1 opacity-70">
+                                                {msg.role === 'user' ? 'Candidate' : 'AI Interviewer'}
+                                              </p>
+                                              <p className="text-zinc-200 leading-relaxed whitespace-pre-wrap">
+                                                {msg.content}
+                                              </p>
+                                            </div>
+                                          ));
+                                        }
+                                      } catch (e) {
+                                        // Fallback for old format (plain text)
+                                        return (
+                                          <div className="bg-zinc-900 p-3 rounded border border-zinc-700 text-sm text-zinc-200 whitespace-pre-wrap">
+                                            {response.response}
+                                          </div>
+                                        );
+                                      }
+                                      return null;
+                                    })()}
                                   </div>
                                 </div>
                               )}
