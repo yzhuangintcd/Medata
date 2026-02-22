@@ -44,6 +44,7 @@ export default function BehaviouralPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [candidateEmail, setCandidateEmail] = useState('candidate@example.com');
+    const [isMounted, setIsMounted] = useState(false);
 
     const scenario = scenarios[activeScenario];
     const progress = scenarioProgress[scenario.id];
@@ -51,6 +52,7 @@ export default function BehaviouralPage() {
 
     // Load progress from localStorage on mount
     useEffect(() => {
+        setIsMounted(true);
         const savedProgress = localStorage.getItem('behavioural_progress');
         if (savedProgress) {
             try {
@@ -199,6 +201,18 @@ export default function BehaviouralPage() {
         setActiveScenario(idx);
         const newProgress = scenarioProgress[newScenario.id];
         setInputValue(newProgress?.userResponse || "");
+    }
+
+    // Prevent hydration mismatch by waiting for client-side mount
+    if (!isMounted) {
+        return (
+            <div className="flex h-[calc(100vh-7rem)] overflow-hidden items-center justify-center">
+                <div className="text-center">
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent mb-4"></div>
+                    <p className="text-zinc-400">Loading interview...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -359,7 +373,7 @@ export default function BehaviouralPage() {
             </div>
 
             {/* ─── Bottom navigation ─── */}
-            <div className="absolute bottom-12 left-0 right-0 flex items-center justify-between border-t border-zinc-800 bg-zinc-900 px-6 py-3">
+            <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between border-t border-zinc-800 bg-zinc-900 px-6 py-3">
                 <Link
                     href="/interview_environment/technical"
                     className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
