@@ -436,13 +436,6 @@ export default function Technical2Page() {
                     </div>
                     <div className="flex gap-2">
                         <button
-                            onClick={handleRun}
-                            disabled={isSubmitted}
-                            className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            ▶ Analyze
-                        </button>
-                        <button
                             onClick={handleSubmit}
                             disabled={isSubmitted}
                             className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
