@@ -14,7 +14,8 @@ interface ResponseData {
   interviewType: string;
   taskId: number;
   taskTitle: string;
-  chatHistory: ChatMessage[];
+  response?: string; // For technical interviews
+  chatHistory?: ChatMessage[]; // For behavioural interviews
   timeSpentSeconds: number;
   metadata: any;
   createdAt: string;
@@ -163,6 +164,30 @@ export default function AdminResponsesPage() {
                   <div className="bg-zinc-800/50 rounded-lg p-4 mb-4">
                     <h4 className="text-sm font-semibold text-zinc-400 mb-2">Metadata</h4>
                     <div className="grid grid-cols-3 gap-4 text-sm">
+                      {response.timeSpentSeconds !== undefined && (
+                        <div>
+                          <span className="text-zinc-500">Time Spent:</span>
+                          <p className="font-medium">{Math.floor(response.timeSpentSeconds / 60)}m {response.timeSpentSeconds % 60}s</p>
+                        </div>
+                      )}
+                      {response.metadata.difficulty !== undefined && (
+                        <div>
+                          <span className="text-zinc-500">Difficulty:</span>
+                          <p className="font-medium">{response.metadata.difficulty}</p>
+                        </div>
+                      )}
+                      {response.metadata.type !== undefined && (
+                        <div>
+                          <span className="text-zinc-500">Type:</span>
+                          <p className="font-medium">{response.metadata.type}</p>
+                        </div>
+                      )}
+                      {response.metadata.hintsViewed !== undefined && (
+                        <div>
+                          <span className="text-zinc-500">Hints Viewed:</span>
+                          <p className="font-medium">{response.metadata.hintsViewed ? "Yes" : "No"}</p>
+                        </div>
+                      )}
                       {response.metadata.currentFollowUp !== undefined && (
                         <div>
                           <span className="text-zinc-500">Follow-ups:</span>
@@ -183,6 +208,20 @@ export default function AdminResponsesPage() {
                           </p>
                         </div>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Technical Interview Response */}
+                {response.response && (response.interviewType === 'technical1' || response.interviewType === 'technical2') && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-zinc-400 mb-3">
+                      Candidate Submission
+                    </h4>
+                    <div className="bg-zinc-950 rounded-lg p-4 border border-zinc-800">
+                      <pre className="text-sm leading-relaxed whitespace-pre-wrap font-mono text-emerald-300 overflow-x-auto">
+                        {response.response}
+                      </pre>
                     </div>
                   </div>
                 )}

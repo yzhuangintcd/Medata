@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
       taskTitle,
       response,
       chatHistory,
+      timeSpentSeconds,
       metadata,
     } = body;
 
@@ -26,6 +27,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const now = new Date();
+    const startTime = timeSpentSeconds 
+      ? new Date(now.getTime() - timeSpentSeconds * 1000)
+      : now;
+
     // Create new response document
     const interviewResponse = await InterviewResponse.create({
       candidateId,
@@ -34,9 +40,9 @@ export async function POST(request: NextRequest) {
       taskId,
       taskTitle,
       response: response || JSON.stringify(chatHistory), // Store chat history as response
-      startedAt: new Date(),
-      submittedAt: new Date(),
-      timeSpentSeconds: 0,
+      startedAt: startTime,
+      submittedAt: now,
+      timeSpentSeconds: timeSpentSeconds || 0,
       metadata: {
         chatHistory: chatHistory || [],
         ...metadata,

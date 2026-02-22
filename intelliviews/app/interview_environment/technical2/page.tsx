@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 /* ─── Task data with real-life scenarios ─── */
 const tasks = [
@@ -185,8 +185,17 @@ export default function Technical2Page() {
     const [code, setCode] = useState(tasks[0].starterCode);
     const [showHints, setShowHints] = useState(false);
     const [output, setOutput] = useState("");
+    const [taskStartTimes, setTaskStartTimes] = useState<Record<number, number>>({});
+    const [submittedTasks, setSubmittedTasks] = useState<Set<number>>(new Set());
 
     const task = tasks[activeTask];
+
+    // Track start time when a task is opened
+    useEffect(() => {
+        if (!taskStartTimes[task.id]) {
+            setTaskStartTimes(prev => ({ ...prev, [task.id]: Date.now() }));
+        }
+    }, [task.id, taskStartTimes]);
 
     function handleTaskSwitch(idx: number) {
         setActiveTask(idx);
@@ -199,8 +208,40 @@ export default function Technical2Page() {
         setOutput("▶ Analyzing your response...\n\n✅ Structure detected.\n\n[AI Agent]: I can see your thought process. Let me ask some follow-up questions about your reasoning...");
     }
 
-    function handleSubmit() {
-        setOutput("📤 Response submitted!\n\n[AI Agent]: Thank you for walking me through your thinking. I'm evaluating your structure, trade-off analysis, and communication strategy. Let's move to the next scenario.");
+    async function handleSubmit() {
+        setOutput("📤 Submitting response...\n\n[AI Agent]: Processing your submission...");
+        
+        // Calculate time spent
+        const startTime = taskStartTimes[task.id] || Date.now();
+        const timeSpentSeconds = Math.floor((Date.now() - startTime) / 1000);
+
+        // Save to database
+        try {
+            await fetch('/api/save-response', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    candidateId: `candidate-${Date.now()}`,
+                    candidateEmail: 'candidate@example.com',
+                    interviewType: 'technical2',
+                    taskId: task.id,
+                    taskTitle: task.title,
+                    response: code,
+                    timeSpentSeconds,
+                    metadata: {
+                        difficulty: task.difficulty,
+                        type: task.type,
+                        hintsViewed: showHints,
+                    },
+                }),
+            });
+            console.log('✅ Technical solution saved to database');
+            setSubmittedTasks(prev => new Set(prev).add(task.id));
+            setOutput("📤 Response submitted!\n\n[AI Agent]: Thank you for walking me through your thinking. I'm evaluating your structure, trade-off analysis, and communication strategy. Let's move to the next scenario.");
+        } catch (error) {
+            console.error('❌ Failed to save to database:', error);
+            setOutput("📤 Response submitted! (Note: Failed to save to database, but you can continue)\n\n[AI Agent]: Thank you for walking me through your thinking. Let's move to the next scenario.");
+        }
     }
 
     return (

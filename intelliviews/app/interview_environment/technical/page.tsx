@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 /* ─── Task data ─── */
 const tasks = [
@@ -132,8 +132,17 @@ export default function TechnicalPage() {
     const [code, setCode] = useState(tasks[0].starterCode);
     const [showHints, setShowHints] = useState(false);
     const [output, setOutput] = useState("");
+    const [taskStartTimes, setTaskStartTimes] = useState<Record<number, number>>({});
+    const [submittedTasks, setSubmittedTasks] = useState<Set<number>>(new Set());
 
     const task = tasks[activeTask];
+
+    // Track start time when a task is opened
+    useEffect(() => {
+        if (!taskStartTimes[task.id]) {
+            setTaskStartTimes(prev => ({ ...prev, [task.id]: Date.now() }));
+        }
+    }, [task.id, taskStartTimes]);
 
     function handleTaskSwitch(idx: number) {
         setActiveTask(idx);
@@ -146,8 +155,46 @@ export default function TechnicalPage() {
         setOutput("▶ Running code...\n\n✅ No syntax errors detected.\n⏱ Execution time: 42ms\n\n[AI Agent]: I see your changes. Let me analyze your approach... Also, tell me how you'd prioritize finishing this vs responding to a production incident.");
     }
 
-    function handleSubmit() {
-        setOutput("📤 Solution submitted!\n\n[AI Agent]: Thank you. I'm reviewing your solution now. I'll assess correctness, code quality, edge-case handling, and your reasoning. Please move on to the next task.");
+    async function handleSubmit() {
+        setOutput("📤 Submitting solution...\n\n[AI Agent]: Processing your submission...");
+        
+        // Skip database save for coding questions
+        if (task.type === 'coding') {
+            setOutput("📤 Solution submitted!\n\n[AI Agent]: Thank you. I'm reviewing your solution now. I'll assess correctness, code quality, edge-case handling, and your reasoning. Please move on to the next task.");
+            return;
+        }
+        
+        // Calculate time spent
+        const startTime = taskStartTimes[task.id] || Date.now();
+        const timeSpentSeconds = Math.floor((Date.now() - startTime) / 1000);
+
+        // Save to database (scenarios only)
+        try {
+            await fetch('/api/save-response', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    candidateId: `candidate-${Date.now()}`,
+                    candidateEmail: 'candidate@example.com',
+                    interviewType: 'technical1',
+                    taskId: task.id,
+                    taskTitle: task.title,
+                    response: code,
+                    timeSpentSeconds,
+                    metadata: {
+                        difficulty: task.difficulty,
+                        type: task.type,
+                        hintsViewed: showHints,
+                    },
+                }),
+            });
+            console.log('✅ Technical solution saved to database');
+            setSubmittedTasks(prev => new Set(prev).add(task.id));
+            setOutput("📤 Solution submitted!\n\n[AI Agent]: Thank you. I'm reviewing your solution now. I'll assess correctness, code quality, edge-case handling, and your reasoning. Please move on to the next task.");
+        } catch (error) {
+            console.error('❌ Failed to save to database:', error);
+            setOutput("📤 Solution submitted! (Note: Failed to save to database, but you can continue)\n\n[AI Agent]: Thank you. I'm reviewing your solution now. Please move on to the next task.");
+        }
     }
 
     return (
