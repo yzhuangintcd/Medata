@@ -94,14 +94,43 @@ export default function FeedbackPage() {
         totalTimeSpent: number;
     } | null>(null);
     const [candidateEmail, setCandidateEmail] = useState('');
+    const [dataSyncStatus, setDataSyncStatus] = useState<'checking' | 'synced' | 'error'>('checking');
 
     useEffect(() => {
         const email = localStorage.getItem('candidateEmail') || 'candidate@example.com';
         setCandidateEmail(email);
         
+        // Verify data sync with manager dashboard
+        verifyDataSync(email);
+        
         // Fetch performance analysis
         analyzPerformance(email);
     }, []);
+
+    async function verifyDataSync(email: string) {
+        try {
+            const response = await fetch('/api/get-responses');
+            const data = await response.json();
+            
+            if (data.success) {
+                const candidateResponses = data.responses.filter(
+                    (r: any) => r.candidateEmail === email
+                );
+                
+                if (candidateResponses.length > 0) {
+                    setDataSyncStatus('synced');
+                    console.log('✅ Data successfully synced to manager dashboard:', candidateResponses.length, 'responses');
+                } else {
+                    setDataSyncStatus('error');
+                }
+            } else {
+                setDataSyncStatus('error');
+            }
+        } catch (err) {
+            console.error('Failed to verify data sync:', err);
+            setDataSyncStatus('error');
+        }
+    }
 
     async function analyzPerformance(email: string) {
         setIsLoading(true);
@@ -146,6 +175,47 @@ export default function FeedbackPage() {
                     <p className="text-zinc-400">
                         Thank you for completing the technical interview. Here's your personalized feedback.
                     </p>
+                </div>
+
+                {/* Data Sync Status */}
+                <div className="mb-8">
+                    {dataSyncStatus === 'checking' && (
+                        <div className="rounded-xl border border-zinc-700 bg-zinc-900 p-5 flex items-center gap-4">
+                            <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-indigo-500 border-r-transparent"></div>
+                            <div className="flex-1">
+                                <p className="font-semibold text-zinc-200">Syncing your responses...</p>
+                                <p className="text-sm text-zinc-500 mt-0.5">Sending your interview data to the hiring team</p>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {dataSyncStatus === 'synced' && (
+                        <div className="rounded-xl border-2 border-emerald-500/40 bg-emerald-950/30 p-5 flex items-center gap-4 shadow-lg shadow-emerald-900/20">
+                            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center">
+                                <span className="text-2xl">✓</span>
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-bold text-emerald-300 text-lg">All Responses Submitted Successfully!</p>
+                                <p className="text-sm text-emerald-200/80 mt-1">
+                                    Your interview data has been sent to the manager dashboard. The hiring team can now review your responses.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {dataSyncStatus === 'error' && (
+                        <div className="rounded-xl border-2 border-amber-500/40 bg-amber-950/30 p-5 flex items-center gap-4">
+                            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-amber-600 flex items-center justify-center">
+                                <span className="text-2xl">⚠️</span>
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-semibold text-amber-300">Verifying submission status...</p>
+                                <p className="text-sm text-amber-200/80 mt-1">
+                                    Your responses were saved. If you have concerns, please contact the hiring team.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Stats Cards */}
@@ -223,6 +293,10 @@ export default function FeedbackPage() {
                     </h3>
                     <ul className="space-y-2 text-sm text-zinc-300">
                         <li className="flex items-start gap-2">
+                            <span className="text-emerald-400 mt-0.5">✓</span>
+                            <span><strong className="text-emerald-300">Your responses are now available</strong> on the manager dashboard for review</span>
+                        </li>
+                        <li className="flex items-start gap-2">
                             <span className="text-indigo-400 mt-0.5">→</span>
                             <span>Our team will review your responses within 2-3 business days</span>
                         </li>
@@ -237,21 +311,7 @@ export default function FeedbackPage() {
                     </ul>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-4 justify-center">
-                    <Link
-                        href="/interview_environment"
-                        className="rounded-lg border border-zinc-700 bg-zinc-800 px-6 py-3 text-sm font-medium text-zinc-100 hover:bg-zinc-700 transition-colors"
-                    >
-                        ← Back to Dashboard
-                    </Link>
-                    <button
-                        onClick={() => window.print()}
-                        className="rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
-                    >
-                        📄 Print Feedback
-                    </button>
-                </div>
+
             </div>
         </div>
     );

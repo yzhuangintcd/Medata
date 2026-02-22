@@ -19,6 +19,12 @@ interface ScenarioProgress {
     completed: boolean;
 }
 
+interface CultureValue {
+    id: string;
+    value: string;
+    description: string;
+}
+
 export default function BehaviouralPage() {
     const [activeScenario, setActiveScenario] = useState(0);
     const [scenarioProgress, setScenarioProgress] = useState<Record<number, ScenarioProgress>>({});
@@ -26,6 +32,7 @@ export default function BehaviouralPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [candidateEmail, setCandidateEmail] = useState('candidate@example.com');
+    const [cultureValues, setCultureValues] = useState<CultureValue[]>([]);
 
     const scenario = scenarios[activeScenario];
     const progress = scenarioProgress[scenario.id];
@@ -45,6 +52,34 @@ export default function BehaviouralPage() {
         const email = localStorage.getItem('candidateEmail');
         if (email) {
             setCandidateEmail(email);
+        }
+
+        // Load company culture values
+        const savedCultureValues = localStorage.getItem('companyCultureValues');
+        if (savedCultureValues) {
+            try {
+                const values = JSON.parse(savedCultureValues);
+                setCultureValues(values);
+            } catch (e) {
+                console.error('Failed to parse culture values', e);
+                // Fallback to default values
+                setCultureValues([
+                    { id: '1', value: 'Communication', description: 'Effective sharing of ideas' },
+                    { id: '2', value: 'Empathy', description: 'Understanding others perspectives' },
+                    { id: '3', value: 'Decision-making', description: 'Making informed choices' },
+                    { id: '4', value: 'Leadership', description: 'Guiding and inspiring teams' },
+                    { id: '5', value: 'Integrity', description: 'Acting with honesty and ethics' },
+                ]);
+            }
+        } else {
+            // Default values if none are set
+            setCultureValues([
+                { id: '1', value: 'Communication', description: 'Effective sharing of ideas' },
+                { id: '2', value: 'Empathy', description: 'Understanding others perspectives' },
+                { id: '3', value: 'Decision-making', description: 'Making informed choices' },
+                { id: '4', value: 'Leadership', description: 'Guiding and inspiring teams' },
+                { id: '5', value: 'Integrity', description: 'Acting with honesty and ethics' },
+            ]);
         }
     }, []);
 
@@ -127,6 +162,12 @@ export default function BehaviouralPage() {
 
     async function handleSubmit() {
         if (!inputValue.trim() || isSubmitting || !progress) return;
+
+        // Check if already completed - prevent duplicate submissions
+        if (progress.completed) {
+            alert('This scenario has already been submitted.');
+            return;
+        }
 
         setIsSubmitting(true);
         
@@ -223,20 +264,19 @@ export default function BehaviouralPage() {
                             🎯 What We're Assessing
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                            {[
-                                "Communication",
-                                "Empathy",
-                                "Decision-making",
-                                "Leadership",
-                                "Integrity",
-                            ].map((trait) => (
-                                <span
-                                    key={trait}
-                                    className="rounded-full bg-zinc-700 px-2.5 py-0.5 text-[10px] font-medium text-zinc-300"
-                                >
-                                    {trait}
-                                </span>
-                            ))}
+                            {cultureValues.length > 0 ? (
+                                cultureValues.map((cv) => (
+                                    <span
+                                        key={cv.id}
+                                        className="rounded-full bg-zinc-700 px-2.5 py-0.5 text-[10px] font-medium text-zinc-300"
+                                        title={cv.description}
+                                    >
+                                        {cv.value}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className="text-[10px] text-zinc-500 italic">Loading culture values...</span>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -323,12 +363,22 @@ export default function BehaviouralPage() {
                 >
                     ← Back to Technical 2
                 </Link>
-                <Link
-                    href="/interview_environment/feedback"
-                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
-                >
-                    Complete Interview & Get Feedback ✓
-                </Link>
+                {progress?.completed ? (
+                    <Link
+                        href="/interview_environment/feedback"
+                        className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+                    >
+                        Complete Interview & Get Feedback ✓
+                    </Link>
+                ) : (
+                    <button
+                        disabled
+                        className="rounded-lg bg-zinc-700 px-4 py-2 text-sm font-medium text-zinc-500 cursor-not-allowed"
+                        title="Please complete the behavioral scenario first"
+                    >
+                        Complete Interview & Get Feedback ✓
+                    </button>
+                )}
             </div>
         </div>
     );
