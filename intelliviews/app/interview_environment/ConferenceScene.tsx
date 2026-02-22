@@ -127,24 +127,6 @@ function Character({
         </mesh>
       ))}
 
-      {/* Legs (seated) */}
-      {[-0.09, 0.09].map((x) => (
-        <group key={x}>
-          <mesh position={[x, 0.63, 0.12]} rotation={[1.5, 0, 0]}>
-            <capsuleGeometry args={[0.055, 0.18, 8, 10]} />
-            <meshStandardMaterial color="#2c3040" roughness={0.8} />
-          </mesh>
-          <mesh position={[x, 0.37, 0.3]} rotation={[0.1, 0, 0]}>
-            <capsuleGeometry args={[0.045, 0.2, 8, 10]} />
-            <meshStandardMaterial color="#2c3040" roughness={0.8} />
-          </mesh>
-          <mesh position={[x, 0.09, 0.37]}>
-            <capsuleGeometry args={[0.035, 0.07, 6, 8]} />
-            <meshStandardMaterial color="#3a2a1a" roughness={0.5} />
-          </mesh>
-        </group>
-      ))}
-
     </group>
   );
 }
@@ -409,19 +391,6 @@ function Chair({
         <cylinderGeometry args={[0.025, 0.025, 0.44, 8]} />
         <meshStandardMaterial color="#666" metalness={0.85} roughness={0.15} />
       </mesh>
-      {[0, 1, 2, 3, 4].map((i) => {
-        const a = (i / 5) * Math.PI * 2;
-        return (
-          <mesh
-            key={i}
-            position={[Math.sin(a) * 0.2, 0.03, Math.cos(a) * 0.2]}
-            rotation={[0, -a, Math.PI / 2]}
-          >
-            <cylinderGeometry args={[0.012, 0.012, 0.2, 6]} />
-            <meshStandardMaterial color="#555" metalness={0.8} roughness={0.2} />
-          </mesh>
-        );
-      })}
     </group>
   );
 }
