@@ -150,22 +150,6 @@ export default function TechnicalPage() {
                         {task.description}
                     </p>
 
-                    {/* AI interviewer prompt */}
-                    <div className="rounded-lg border border-indigo-600/30 bg-indigo-950/30 p-4 mb-6">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="h-6 w-6 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold">
-                                AI
-                            </span>
-                            <span className="text-xs font-semibold text-indigo-400">
-                                AI Interviewer
-                            </span>
-                        </div>
-                        <p className="text-sm text-zinc-300 leading-relaxed">
-                            "Take your time reading the problem. I'd love to hear your thought
-                            process — talk me through your approach before you start coding.
-                            What edge cases come to mind?"
-                        </p>
-                    </div>
 
                     {/* Hints */}
                     <button

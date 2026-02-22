@@ -254,21 +254,6 @@ export default function Technical2Page() {
                         {task.description}
                     </p>
 
-                    {/* AI interviewer prompt */}
-                    <div className="rounded-lg border border-indigo-600/30 bg-indigo-950/30 p-4 mb-6">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="h-6 w-6 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold">
-                                AI
-                            </span>
-                            <span className="text-xs font-semibold text-indigo-400">
-                                AI Interviewer
-                            </span>
-                        </div>
-                        <p className="text-sm text-zinc-300 leading-relaxed">
-                            "This interview focuses on real-world problem-solving. I'm evaluating how you structure your thinking, weigh trade-offs, handle ambiguity, and communicate with different stakeholders. There's no single right answer — show me your reasoning process."
-                        </p>
-                    </div>
-
                     {/* Hints */}
                     <button
                         onClick={() => setShowHints(!showHints)}

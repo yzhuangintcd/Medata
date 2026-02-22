@@ -217,24 +217,6 @@ export default function BehaviouralPage() {
                         </p>
                     </div>
 
-                    {/* Follow-up questions preview */}
-                    <div className="mb-4">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
-                            💬 Interview Question
-                        </h3>
-                        <div className="text-sm text-zinc-400">
-                            {progress?.completed ? (
-                                <p className="text-emerald-400">✅ Completed</p>
-                            ) : isLoadingQuestion ? (
-                                <p>Loading question...</p>
-                            ) : progress ? (
-                                <p className="text-zinc-300">{progress.question}</p>
-                            ) : (
-                                <p>Preparing question...</p>
-                            )}
-                        </div>
-                    </div>
-
                     {/* Assessment rubric hint */}
                     <div className="rounded-lg border border-zinc-800 bg-zinc-800/50 p-4">
                         <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">

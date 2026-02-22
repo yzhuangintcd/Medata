@@ -372,18 +372,6 @@ export default function CompanyDashboard() {
                     {isLoading ? 'Sending...' : emailSent ? '✓ Email Sent!' : 'Send Interview Link to Candidate'}
                   </button>
 
-                  {/* Responses Summary */}
-                  <div className="border-t border-slate-200 pt-4 mt-4">
-                    <p className="text-sm font-medium text-slate-700 mb-2">
-                      Interview Responses:
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {responses.length}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {responses.filter(r => r.metadata?.completed).length} completed
-                    </p>
-                  </div>
                 </div>
               ) : (
                 <p className="text-slate-500">No candidate selected</p>
