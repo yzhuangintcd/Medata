@@ -214,14 +214,57 @@ export default function AdminResponsesPage() {
 
                 {/* Technical Interview Response */}
                 {response.response && (response.interviewType === 'technical1' || response.interviewType === 'technical2') && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-zinc-400 mb-3">
-                      Candidate Submission
-                    </h4>
-                    <div className="bg-zinc-950 rounded-lg p-4 border border-zinc-800">
-                      <pre className="text-sm leading-relaxed whitespace-pre-wrap font-mono text-emerald-300 overflow-x-auto">
-                        {response.response}
-                      </pre>
+                  <div className="space-y-4">
+                    {/* Question Section */}
+                    {response.metadata?.question && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-zinc-400 mb-3">
+                          Question
+                        </h4>
+                        <div className="bg-zinc-950 rounded-lg p-4 border border-zinc-800 space-y-4">
+                          {/* Description */}
+                          <div>
+                            <p className="text-xs text-zinc-500 mb-2 font-semibold uppercase tracking-wider">Description</p>
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-300">
+                              {response.metadata.question.description}
+                            </p>
+                          </div>
+                          
+                          {/* Starter Code */}
+                          {response.metadata.question.starterCode && (
+                            <div>
+                              <p className="text-xs text-zinc-500 mb-2 font-semibold uppercase tracking-wider">Starter Code / Template</p>
+                              <pre className="text-xs leading-relaxed whitespace-pre-wrap font-mono text-zinc-400 bg-zinc-900 p-3 rounded border border-zinc-700 overflow-x-auto">
+                                {response.metadata.question.starterCode}
+                              </pre>
+                            </div>
+                          )}
+                          
+                          {/* Hints (if viewed) */}
+                          {response.metadata.hintsViewed && response.metadata.question.hints && response.metadata.question.hints.length > 0 && (
+                            <div>
+                              <p className="text-xs text-zinc-500 mb-2 font-semibold uppercase tracking-wider">Hints (Candidate Viewed These)</p>
+                              <ul className="list-disc list-inside space-y-1 text-sm text-zinc-400">
+                                {response.metadata.question.hints.map((hint: string, idx: number) => (
+                                  <li key={idx}>{hint}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Candidate Submission */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-zinc-400 mb-3">
+                        Candidate Submission
+                      </h4>
+                      <div className="bg-zinc-950 rounded-lg p-4 border border-zinc-800">
+                        <pre className="text-sm leading-relaxed whitespace-pre-wrap font-mono text-emerald-300 overflow-x-auto">
+                          {response.response}
+                        </pre>
+                      </div>
                     </div>
                   </div>
                 )}

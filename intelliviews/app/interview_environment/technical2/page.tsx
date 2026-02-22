@@ -232,6 +232,11 @@ export default function Technical2Page() {
                         difficulty: task.difficulty,
                         type: task.type,
                         hintsViewed: showHints,
+                        question: {
+                            description: task.description,
+                            starterCode: task.starterCode,
+                            hints: task.hints,
+                        },
                     },
                 }),
             });
