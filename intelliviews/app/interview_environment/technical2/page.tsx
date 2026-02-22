@@ -356,13 +356,17 @@ export default function Technical2Page() {
                 }),
             });
             console.log('✅ Technical solution saved to database');
-            setSubmittedTasks(prev => new Set(prev).add(task.id));
-            setOutput("📤 Response submitted!\n\n[AI Agent]: Thank you for walking me through your thinking. I'm evaluating your structure, trade-off analysis, and communication strategy. Let's move to the next scenario.");
+            
+            // Mark as completed
+            setIsSubmitted(true);
+            localStorage.setItem('technical2_submitted', 'true');
+            setOutput("📤 Response submitted!\n\n[AI Agent]: Thank you for walking me through your thinking. I'm evaluating your structure, trade-off analysis, and communication strategy.");
         } catch (error) {
             console.error('❌ Failed to save to database:', error);
             // Still mark as completed even if DB save fails
-            setSubmittedTasks(prev => new Set(prev).add(task.id));
-            setOutput("📤 Response submitted! (Note: Failed to save to database, but you can continue)\n\n[AI Agent]: Thank you for walking me through your thinking. Let's move to the next scenario.");
+            setIsSubmitted(true);
+            localStorage.setItem('technical2_submitted', 'true');
+            setOutput("📤 Response submitted! (Note: Failed to save to database, but you can continue)\n\n[AI Agent]: Thank you for walking me through your thinking.");
         }
     }
 
