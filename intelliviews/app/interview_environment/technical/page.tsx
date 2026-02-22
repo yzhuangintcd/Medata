@@ -414,7 +414,7 @@ export default function TechnicalPage() {
             </div>
 
             {/* ─── Navigation footer inside panel ─── */}
-            <div className="absolute bottom-12 left-0 right-0 flex items-center justify-between border-t border-zinc-800 bg-zinc-900 px-6 py-3">
+            <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between border-t border-zinc-800 bg-zinc-900 px-6 py-3">
                 <Link
                     href="/interview_environment"
                     className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
