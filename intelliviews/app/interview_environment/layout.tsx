@@ -1,14 +1,10 @@
 "use client";
 
-import { useState } from "react";
-
 export default function InterviewLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const [timer] = useState("45:00");
-
     return (
         <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
             {/* ─── Top bar ─── */}
@@ -20,17 +16,6 @@ export default function InterviewLayout({
                     <span className="text-lg font-semibold tracking-tight">
                         Intelli<span className="text-indigo-400">View</span>
                     </span>
-                </div>
-
-                {/* Timer & candidate info */}
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 rounded-lg bg-zinc-800 px-3 py-1.5 text-sm font-mono">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                        {timer}
-                    </div>
-                    <div className="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold">
-                        C
-                    </div>
                 </div>
             </header>
 

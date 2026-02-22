@@ -522,7 +522,7 @@ export default function ConferenceScene({
                 hairColor={p.hairColor}
                 hairStyle={p.hairStyle}
                 shirtColor={p.shirtColor}
-                onClick={() => onSelect(p.id)}
+                onClick={() => {}}
               />
             </group>
           );
