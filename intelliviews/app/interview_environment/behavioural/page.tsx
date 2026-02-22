@@ -37,7 +37,13 @@ export default function BehaviouralPage() {
     const [inputValue, setInputValue] = useState("");
     const [candidateEmail, setCandidateEmail] = useState('candidate@example.com');
     const [cultureValues, setCultureValues] = useState<CultureValue[]>([]);
+    const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+    const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+    const [hasUserInteracted, setHasUserInteracted] = useState(false);
+    const [isListening, setIsListening] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const recognitionRef = useRef<any>(null);
 
     const scenario = scenarios[activeScenario];
     const progress = scenarioProgress[scenario.id];
@@ -120,12 +126,135 @@ export default function BehaviouralPage() {
         }
     }, [activeScenario]);
 
+    // Cleanup audio on unmount
+    useEffect(() => {
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+        };
+    }, []);
+
+    // Initialize speech recognition
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+
+                recognition.onresult = (event: any) => {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript + ' ';
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    if (finalTranscript) {
+                        setInputValue(prev => prev + finalTranscript);
+                    } else if (interimTranscript) {
+                        // Show interim results in real-time
+                        setInputValue(prev => {
+                            const lastSpace = prev.lastIndexOf(' ');
+                            const base = lastSpace >= 0 ? prev.substring(0, lastSpace + 1) : '';
+                            return base + interimTranscript;
+                        });
+                    }
+                };
+
+                recognition.onerror = (event: any) => {
+                    console.error('Speech recognition error:', event.error);
+                    setIsListening(false);
+                };
+
+                recognition.onend = () => {
+                    setIsListening(false);
+                };
+
+                recognitionRef.current = recognition;
+            }
+        }
+    }, []);
+
     // Save progress to localStorage whenever it changes
     useEffect(() => {
         if (Object.keys(scenarioProgress).length > 0) {
             localStorage.setItem('behavioural_progress', JSON.stringify(scenarioProgress));
         }
     }, [scenarioProgress]);
+
+    async function playAIMessage(text: string) {
+        // Only play audio if voice is enabled AND user has interacted (browser autoplay policy)
+        if (!isVoiceEnabled || !hasUserInteracted) return;
+
+        try {
+            setIsPlayingAudio(true);
+            
+            const response = await fetch('/api/text-to-speech', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate speech');
+            }
+
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+
+            const audio = new Audio(audioUrl);
+            audioRef.current = audio;
+            
+            audio.onended = () => {
+                setIsPlayingAudio(false);
+                URL.revokeObjectURL(audioUrl);
+            };
+
+            audio.onerror = () => {
+                setIsPlayingAudio(false);
+                URL.revokeObjectURL(audioUrl);
+                console.error('Error playing audio');
+            };
+
+            await audio.play();
+        } catch (error) {
+            console.error('❌ Error playing AI message:', error);
+            setIsPlayingAudio(false);
+        }
+    }
+
+    function toggleListening() {
+        if (!recognitionRef.current) {
+            alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+            return;
+        }
+
+        if (isListening) {
+            recognitionRef.current.stop();
+            setIsListening(false);
+        } else {
+            setHasUserInteracted(true);
+            recognitionRef.current.start();
+            setIsListening(true);
+        }
+    }
 
     async function startConversation() {
         setIsLoadingMessage(true);
@@ -158,6 +287,9 @@ export default function BehaviouralPage() {
                     completed: false,
                 }
             }));
+
+            // Play the AI's message
+            await playAIMessage(data.response);
         } catch (error) {
             console.error("❌ Error starting conversation:", error);
             // Provide a fallback message
@@ -178,6 +310,15 @@ export default function BehaviouralPage() {
 
     async function sendMessage() {
         if (!inputValue.trim() || isLoadingMessage || !progress || progress.completed) return;
+
+        // Mark that user has interacted (allows audio playback)
+        setHasUserInteracted(true);
+
+        // Stop listening when sending
+        if (isListening && recognitionRef.current) {
+            recognitionRef.current.stop();
+            setIsListening(false);
+        }
 
         const userMessage = inputValue.trim();
         setInputValue("");
@@ -224,6 +365,9 @@ export default function BehaviouralPage() {
                     messages: [...updatedMessages, { role: 'assistant', content: data.response }],
                 }
             }));
+
+            // Play the AI's message
+            await playAIMessage(data.response);
         } catch (error) {
             console.error("❌ Error getting AI response:", error);
             // Show error message in chat
@@ -384,8 +528,32 @@ export default function BehaviouralPage() {
                             Behavioural Assessment • Scenario {scenario.id}
                         </p>
                     </div>
+                    
+                    {/* Voice toggle button */}
+                    <button
+                        onClick={() => setIsVoiceEnabled(!isVoiceEnabled)}
+                        className="ml-auto mr-3 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-zinc-800"
+                        title={isVoiceEnabled ? 'Voice enabled' : 'Voice disabled'}
+                    >
+                        {isVoiceEnabled ? (
+                            <span className="flex items-center gap-1.5">
+                                <span className="text-emerald-400">🔊</span>
+                                <span className="text-zinc-300">Voice ON</span>
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-1.5">
+                                <span className="text-zinc-500">🔇</span>
+                                <span className="text-zinc-500">Voice OFF</span>
+                            </span>
+                        )}
+                    </button>
+
+                    {isPlayingAudio && (
+                        <span className="text-xs text-indigo-400 animate-pulse mr-2">🎙️ Speaking...</span>
+                    )}
+
                     {progress?.completed && (
-                        <span className="ml-auto text-emerald-400 text-xs font-medium">✓ Completed</span>
+                        <span className="text-emerald-400 text-xs font-medium">✓ Completed</span>
                     )}
                 </div>
 
@@ -413,9 +581,24 @@ export default function BehaviouralPage() {
                                                 : 'bg-zinc-800 text-zinc-100 border border-zinc-700'
                                         }`}
                                     >
-                                        <p className="text-xs font-semibold mb-1 opacity-70">
-                                            {message.role === 'user' ? 'You' : 'AI Interviewer'}
-                                        </p>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <p className="text-xs font-semibold opacity-70">
+                                                {message.role === 'user' ? 'You' : 'AI Interviewer'}
+                                            </p>
+                                            {message.role === 'assistant' && isVoiceEnabled && (
+                                                <button
+                                                    onClick={() => {
+                                                        setHasUserInteracted(true);
+                                                        playAIMessage(message.content);
+                                                    }}
+                                                    disabled={isPlayingAudio}
+                                                    className="ml-2 text-xs opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
+                                                    title="Play audio"
+                                                >
+                                                    🔊
+                                                </button>
+                                            )}
+                                        </div>
                                         <p className="text-sm leading-relaxed whitespace-pre-wrap">
                                             {message.content}
                                         </p>
@@ -449,17 +632,35 @@ export default function BehaviouralPage() {
                             ) : (
                                 <>
                                     <div className="flex gap-3 items-end">
-                                        <div className="flex-1">
+                                        <div className="flex-1 relative">
                                             <input
                                                 type="text"
                                                 value={inputValue}
                                                 onChange={(e) => setInputValue(e.target.value)}
                                                 onKeyPress={handleKeyPress}
-                                                placeholder="Type your response... (Press Enter to send)"
+                                                placeholder={isListening ? "Listening... Speak now" : "Type your response or click mic to speak..."}
                                                 disabled={isLoadingMessage}
                                                 className="w-full rounded-lg bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none ring-1 ring-zinc-700 focus:ring-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
+                                            {isListening && (
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
+                                                    <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
+                                                    <span className="text-xs text-red-400">Recording</span>
+                                                </div>
+                                            )}
                                         </div>
+                                        <button
+                                            onClick={toggleListening}
+                                            disabled={isLoadingMessage}
+                                            className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                                                isListening 
+                                                    ? 'bg-red-600 hover:bg-red-500 text-white animate-pulse' 
+                                                    : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-100'
+                                            }`}
+                                            title={isListening ? 'Stop recording' : 'Start voice input'}
+                                        >
+                                            {isListening ? '⏹️ Stop' : '🎤 Speak'}
+                                        </button>
                                         <button
                                             onClick={sendMessage}
                                             disabled={isLoadingMessage || !inputValue.trim()}
@@ -476,7 +677,7 @@ export default function BehaviouralPage() {
                                         </button>
                                     </div>
                                     <p className="mt-2 text-[10px] text-zinc-600">
-                                        Have a natural conversation. Click "Complete Interview" when you're done to save the conversation.
+                                        Have a natural conversation. Type or speak your response. Click "Complete Interview" when done.
                                     </p>
                                 </>
                             )}
